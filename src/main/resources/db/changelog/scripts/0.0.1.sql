@@ -22,4 +22,5 @@ CREATE TABLE IF NOT EXISTS tasks
     );
 
 CREATE INDEX parent_id ON tasks(parent_id);
+CREATE INDEX user_id ON users(id);
 

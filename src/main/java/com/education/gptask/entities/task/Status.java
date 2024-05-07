@@ -6,8 +6,9 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum Status {
-    IN_PROGRESS(0),
-    DONE(1);
+    PLANNED(0),
+    IN_PROGRESS(1),
+    DONE(2);
 
     private int code;
 }
