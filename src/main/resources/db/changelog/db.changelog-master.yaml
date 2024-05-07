@@ -1,3 +1,7 @@
 databaseChangeLog:
   - include:
-      file: db/changelog/0.0.1/changelog-1.sql
+      file: /scripts/0.0.1.sql
+      relativeToChangelogFile: true
+#databaseChangeLog:
+#  - include:
+#      file: db/changelog/0.0.1/changelog-1.sql
