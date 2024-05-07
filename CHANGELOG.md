@@ -6,6 +6,7 @@
 * Настройка docker-compose.yml
 * Настройка application.yml
 * Настройка liquibase
+* Создание основных сущностей
 
 
 
