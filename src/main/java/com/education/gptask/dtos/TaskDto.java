@@ -9,10 +9,9 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class TaskDto {
     private String name;
-
     private Priority priority;
-
     private Status status;
-
     private String comment;
+    private Long userId;
+    private Long parentId;
 }
