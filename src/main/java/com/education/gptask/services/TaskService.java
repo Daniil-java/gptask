@@ -21,37 +21,38 @@ public class TaskService {
     private final TaskMapper taskMapper;
     private final UserMapper userMapper;
 
-    public Task createTask(TaskDto task) {
-        return taskRepository.save(
-                taskMapper.dtoToEntity(task)
-        );
-    }
-
     public List<Task> getTasksByUserId(Long id) {
         return taskRepository.findTasksByUserIdAndParentIsNull(id)
                 .orElseThrow(() -> new ErrorResponseException(ErrorStatus.TASK_ERROR));
     }
-    public Task createSubtask(Task parent, Task child) {
-        return taskRepository.save(
-                child.setUser(parent.getUser()).setParent(parent));
+
+    public TaskDto getTaskById(Long id) {
+        return taskMapper.entityToDto(
+                taskRepository.getReferenceById(id)
+        );
     }
 
-    public List<Task> createAllSubtasks(List<Task> childList) {
-        return taskRepository.saveAll(childList);
-    }
-    public List<Task> createAllSubtasks(Task parent, List<Task> childList) {
-        for (Task child : childList) {
-            child.setUser(parent.getUser()).setParent(parent);
+    public TaskDto createTask(TaskDto taskDto) {
+        if (!taskDto.getChildTasks().isEmpty()) {
+            throw new ErrorResponseException(ErrorStatus.TASK_CREATION_ERROR);
         }
-        return taskRepository.saveAll(childList);
+        return taskMapper.entityToDto(
+                taskRepository.save(
+                        taskMapper.dtoToEntity(taskDto)
+        ));
     }
 
-    public Task getTaskById(Long id) {
-        return taskRepository.getReferenceById(id);
-    }
-
-    public Task updateTask(Task task) {
-        return taskRepository.save(task);
+    public TaskDto updateTask(TaskDto taskDto) {
+        if (taskDto.getId() == null) {
+            throw new ErrorResponseException(ErrorStatus.TASK_UPDATE_ERROR);
+        }
+        if (!taskDto.getChildTasks().isEmpty()) {
+            taskDto.getChildTasks().clear();
+        }
+        return taskMapper.entityToDto(
+                taskRepository.save(
+                        taskMapper.dtoToEntity(taskDto)
+                ));
     }
 
     public void deleteTaskById(Long id) {

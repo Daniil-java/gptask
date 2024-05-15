@@ -22,53 +22,43 @@ class TaskServiceTest {
     @Autowired
     private TaskRepository taskRepository;
 
-    private final UserDto USER_DTO = new UserDto().setId(1L);
-    private final TaskDto TASK_DTO = new TaskDto().setName("test").setStatus(Status.PLANNED)
-            .setPriority(Priority.MUST).setComment("comment");
-    private final Task TASK = new Task().setId(1L).setName("test").setUser(new User().setId(1L))
-            .setStatus(Status.PLANNED).setPriority(Priority.MUST).setComment("comment");
+    private final UserDto USER_DTO = new UserDto().setId(10001L);
+    private final User USER = new User().setId(10001L);
+    private final TaskDto TASK_DTO_1 =
+            new TaskDto()
+                    .setPriority(0)
+                    .setStatus(1)
+                    .setUser(USER_DTO)
+            ;
 
-    @Test
-     void createTask() {
-        Task task = taskService.createTask(TASK_DTO, USER_DTO);
-        Assertions.assertNotNull(task);
-        Assertions.assertEquals(USER_DTO.getId(), task.getUser().getId());
-        Assertions.assertEquals(TASK_DTO.getPriority(), task.getPriority());
-        Assertions.assertEquals(TASK_DTO.getStatus(), task.getStatus());
-        Assertions.assertEquals(TASK_DTO.getComment(), task.getComment());
-        Assertions.assertEquals(TASK_DTO.getName(), task.getName());
+    private final TaskDto TASK_DTO_2 =
+            new TaskDto()
+                    .setPriority(0)
+                    .setStatus(1)
+                    .setUser(USER_DTO)
+            ;
+    private final List<TaskDto> taskDtoList = new ArrayList<>();
 
-    }
+    private final Task TASK_1 =
+            new Task()
+                    .setPriority(Priority.MUST)
+                    .setStatus(Status.IN_PROGRESS)
+                    .setUser(USER)
+            ;
+    private final Task TASK_2 =
+            new Task()
+                    .setPriority(Priority.MUST)
+                    .setStatus(Status.IN_PROGRESS)
+                    .setUser(USER)
+            ;
+    private final List<Task> taskList = new ArrayList<>();
 
-    @Test
-    void getTaskByUserId() {
-        Task task = taskService.getTasksByUserId(USER_DTO.getId()).get(0);
-        Assertions.assertNotNull(task);
-        Assertions.assertEquals(USER_DTO.getId(), task.getUser().getId());
-        Assertions.assertEquals(TASK_DTO.getPriority(), task.getPriority());
-        Assertions.assertEquals(TASK_DTO.getStatus(), task.getStatus());
-        Assertions.assertEquals(TASK_DTO.getComment(), task.getComment());
-        Assertions.assertEquals(TASK_DTO.getName(), task.getName());
-    }
+    @BeforeEach
+    void setUp() {
+        taskDtoList.add(TASK_DTO_1);
+        taskDtoList.add(TASK_DTO_2);
 
-    @Test
-    void createSubtask() {
-        Task task = taskService.createSubtask(TASK,
-                new Task().setPriority(Priority.MUST).setStatus(Status.PLANNED));
-        Assertions.assertNotNull(task);
-        Assertions.assertEquals(TASK.getId(), task.getParent().getId());
-    }
-
-    @Test
-    void createAllSubtasks() {
-        List<Task> list = new ArrayList<>();
-        list.add(new Task().setPriority(Priority.MUST).setStatus(Status.PLANNED));
-        list.add(new Task().setPriority(Priority.MUST).setStatus(Status.PLANNED));
-        List<Task> taskList = taskService.createAllSubtasks(TASK, list);
-
-        Assertions.assertNotNull(taskList);
-        for (Task task : taskList) {
-            Assertions.assertEquals(TASK.getId(), task.getParent().getId());
-        }
+        taskList.add(TASK_1);
+        taskList.add(TASK_2);
     }
 }
