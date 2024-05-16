@@ -39,11 +39,11 @@ public class Task {
     private String name;
 
     @Column(name = "priority")
-    @Enumerated(EnumType.ORDINAL)
+    @Enumerated(EnumType.STRING)
     private Priority priority;
 
     @Column(name = "status")
-    @Enumerated(EnumType.ORDINAL)
+    @Enumerated(EnumType.STRING)
     private Status status;
 
     @Column(name = "comment")
