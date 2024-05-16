@@ -1,5 +1,7 @@
 package com.education.gptask.dtos;
 
+import com.education.gptask.entities.task.Priority;
+import com.education.gptask.entities.task.Status;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -10,8 +12,8 @@ import java.util.List;
 public class TaskDto {
     private Long id;
     private String name;
-    private String priority;
-    private String status;
+    private Priority priority;
+    private Status status;
     private String comment;
     private UserDto user;
     private TaskDto parent;

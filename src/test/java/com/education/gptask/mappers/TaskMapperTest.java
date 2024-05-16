@@ -26,16 +26,16 @@ class TaskMapperTest {
     private final TaskDto TASK_DTO_1 =
             new TaskDto()
                     .setName("name")
-                    .setPriority("MUST")
-                    .setStatus("DONE")
+                    .setPriority(Priority.MUST)
+                    .setStatus(Status.DONE)
                     .setUser(USER_DTO)
             ;
 
     private final TaskDto TASK_DTO_2 =
             new TaskDto()
                     .setName("name")
-                    .setPriority("MUST")
-                    .setStatus("DONE")
+                    .setPriority(Priority.MUST)
+                    .setStatus(Status.DONE)
                     .setUser(USER_DTO)
             ;
     private final List<TaskDto> taskDtoList = new ArrayList<>();
@@ -69,8 +69,8 @@ class TaskMapperTest {
     void dtoToEntity() {
         TaskDto taskDto = new TaskDto()
                 .setName("name")
-                .setPriority("MUST")
-                .setStatus("DONE")
+                .setPriority(Priority.MUST)
+                .setStatus(Status.DONE)
                 .setUser(USER_DTO)
                 .setParent(new TaskDto().setId(1L))
                 .setChildTasks(taskDtoList);
@@ -78,11 +78,11 @@ class TaskMapperTest {
 
         Assertions.assertNotNull(task);
         Assertions.assertEquals(taskDto.getName(), task.getName());
-        Assertions.assertEquals(taskDto.getPriority(), task.getPriority().toString());
-        Assertions.assertEquals(taskDto.getStatus(), task.getStatus().toString());
+        Assertions.assertEquals(taskDto.getPriority(), task.getPriority());
+        Assertions.assertEquals(taskDto.getStatus(), task.getStatus());
         Assertions.assertEquals(taskDto.getUser().getId(), task.getUser().getId());
         Assertions.assertEquals(task.getChildTasks().size(), 2);
-        Assertions.assertEquals(task.getChildTasks().get(0).getPriority().toString(), taskDtoList.get(0).getPriority());
+        Assertions.assertEquals(task.getChildTasks().get(0).getPriority(), taskDtoList.get(0).getPriority());
     }
 
     @Test
@@ -98,10 +98,10 @@ class TaskMapperTest {
 
         Assertions.assertNotNull(task);
         Assertions.assertEquals(taskDto.getName(), task.getName());
-        Assertions.assertEquals(taskDto.getPriority(), Priority.MUST.toString());
-        Assertions.assertEquals(taskDto.getStatus(), Status.DONE.toString());
+        Assertions.assertEquals(taskDto.getPriority(), Priority.MUST);
+        Assertions.assertEquals(taskDto.getStatus(), Status.DONE);
         Assertions.assertEquals(taskDto.getUser().getId(), task.getUser().getId());
         Assertions.assertEquals(taskDto.getChildTasks().size(), 2);
-        Assertions.assertEquals(taskDto.getChildTasks().get(0).getPriority(), taskList.get(0).getPriority().toString() );
+        Assertions.assertEquals(taskDto.getChildTasks().get(0).getPriority(), taskList.get(0).getPriority());
     }
 }

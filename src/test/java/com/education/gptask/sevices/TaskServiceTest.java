@@ -26,15 +26,15 @@ class TaskServiceTest {
     private final User USER = new User().setId(10001L);
     private final TaskDto TASK_DTO_1 =
             new TaskDto()
-                    .setPriority("MUST")
-                    .setStatus("DONE")
+                    .setPriority(Priority.MUST)
+                    .setStatus(Status.DONE)
                     .setUser(USER_DTO)
             ;
 
     private final TaskDto TASK_DTO_2 =
             new TaskDto()
-                    .setPriority("MUST")
-                    .setStatus("DONE")
+                    .setPriority(Priority.MUST)
+                    .setStatus(Status.DONE)
                     .setUser(USER_DTO)
             ;
     private final List<TaskDto> taskDtoList = new ArrayList<>();
