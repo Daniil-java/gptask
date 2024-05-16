@@ -12,61 +12,46 @@ import org.mapstruct.Named;
 @Mapper(componentModel = "spring")
 public interface TaskMapper {
     @Mappings({
-            @Mapping(source = "priority", target = "priority", qualifiedByName = "priorityToInt"),
-            @Mapping(source = "status", target = "status", qualifiedByName = "statusToInt")
+            @Mapping(source = "priority", target = "priority", qualifiedByName = "priorityToString"),
+            @Mapping(source = "status", target = "status", qualifiedByName = "statusToString")
     })
     TaskDto entityToDto(Task task);
 
     @Mappings({
-            @Mapping(source = "priority", target = "priority", qualifiedByName = "intToPriority"),
-            @Mapping(source = "status", target = "status", qualifiedByName = "intToStatus")
+            @Mapping(source = "priority", target = "priority", qualifiedByName = "stringToPriority"),
+            @Mapping(source = "status", target = "status", qualifiedByName = "stringToStatus")
     })
     Task dtoToEntity(TaskDto taskDto);
 
-    @Named("intToPriority")
-    static Priority longToPriority(int priority) {
-        if (priority == 0) {
-            return Priority.MUST;
-        } else if (priority == 1) {
-            return Priority.SHOULD;
-        } else if (priority == 2) {
-            return Priority.COULD;
-        } else if (priority == 3) {
+    @Named("stringToPriority")
+    static Priority stringToPriority(String priority) {
+        if (priority == null) {
             return Priority.WOULD;
         }
-        return null;
+        return Priority.valueOf(priority);
     }
 
-    @Named("priorityToInt")
-    static int priorityToInt(Priority priority) {
-        switch (priority) {
-            case MUST: return 0;
-            case SHOULD: return 1;
-            case COULD: return 2;
-            case WOULD: return 3;
+    @Named("priorityToString")
+    static String priorityToString(Priority priority) {
+        if (priority == null) {
+            return Priority.WOULD.toString();
         }
-        return 3;
+        return priority.toString();
     }
 
-    @Named("intToStatus")
-    static Status intToStatus(int status) {
-        if (status == 0) {
+    @Named("stringToStatus")
+    static Status stringToStatus(String status) {
+        if (status == null) {
             return Status.PLANNED;
-        } else if (status == 1) {
-            return Status.IN_PROGRESS;
-        } else if (status == 2) {
-            return Status.DONE;
         }
-        return null;
+        return Status.valueOf(status);
     }
 
-    @Named("statusToInt")
-    static int statusToInt(Status status) {
-        switch (status) {
-            case PLANNED: return 0;
-            case IN_PROGRESS: return 1;
-            case DONE: return 2;
+    @Named("statusToString")
+    static String statusToString(Status status) {
+        if (status == null) {
+            return Status.PLANNED.toString();
         }
-        return 0;
+        return status.toString();
     }
 }

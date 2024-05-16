@@ -10,8 +10,8 @@ import java.util.List;
 public class TaskDto {
     private Long id;
     private String name;
-    private int priority;
-    private int status;
+    private String priority;
+    private String status;
     private String comment;
     private UserDto user;
     private TaskDto parent;

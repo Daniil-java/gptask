@@ -10,6 +10,7 @@ import com.education.gptask.repositories.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.util.List;
 
@@ -33,7 +34,7 @@ public class TaskService {
     }
 
     public TaskDto createTask(TaskDto taskDto) {
-        if (!taskDto.getChildTasks().isEmpty()) {
+        if (!CollectionUtils.isEmpty(taskDto.getChildTasks())) {
             throw new ErrorResponseException(ErrorStatus.TASK_CREATION_ERROR);
         }
         return taskMapper.entityToDto(
@@ -46,9 +47,10 @@ public class TaskService {
         if (taskDto.getId() == null) {
             throw new ErrorResponseException(ErrorStatus.TASK_UPDATE_ERROR);
         }
-        if (!taskDto.getChildTasks().isEmpty()) {
-            taskDto.getChildTasks().clear();
+        if (!CollectionUtils.isEmpty(taskDto.getChildTasks())) {
+            throw new ErrorResponseException(ErrorStatus.TASK_UPDATE_ERROR);
         }
+
         return taskMapper.entityToDto(
                 taskRepository.save(
                         taskMapper.dtoToEntity(taskDto)

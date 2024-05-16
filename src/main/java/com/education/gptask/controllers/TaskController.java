@@ -15,7 +15,7 @@ import java.util.List;
 public class TaskController {
     private final TaskService taskService;
 
-    @GetMapping()
+    @GetMapping
     public List<Task> getAllTasksByUserId(@RequestParam Long userId) {
         return taskService.getTasksByUserId(userId);
     }
@@ -35,8 +35,8 @@ public class TaskController {
         return taskService.updateTask(taskDto);
     }
 
-    @DeleteMapping
-    public void deleteTaskById(@RequestParam Long taskId) {
+    @DeleteMapping("/{taskId}")
+    public void deleteTaskById(@PathVariable Long taskId) {
         taskService.deleteTaskById(taskId);
     }
 
