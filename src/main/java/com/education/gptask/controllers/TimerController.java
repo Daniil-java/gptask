@@ -5,6 +5,8 @@ import com.education.gptask.services.TimerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 @RestController
 @RequestMapping("/api/v1/timer")
@@ -13,8 +15,8 @@ public class TimerController {
     private final TimerService timerService;
 
     @GetMapping
-    public TimerDto getTimerByUserId(@RequestParam Long userId) {
-        return timerService.getTimerByUserId(userId);
+    public List<TimerDto> getTimersByUserId(@RequestParam Long userId) {
+        return timerService.getTimersByUserId(userId);
     }
 
     @GetMapping("/{timerId}")
@@ -33,8 +35,8 @@ public class TimerController {
     }
 
     @PostMapping("/{timerId}/change-status")
-    public TimerDto updateTimerStatus(@PathVariable Long timerId, @RequestBody TimerDto timerDto) {
-        return timerService.updateTimerStatus(timerId, timerDto);
+    public TimerDto updateTimerStatus(@PathVariable Long timerId, @RequestParam String status) {
+        return timerService.updateTimerStatus(timerId, status);
     }
 
     @DeleteMapping("/{timerId}")

@@ -5,10 +5,13 @@ import com.education.gptask.dtos.mappers.TimerMapper;
 import com.education.gptask.entities.error.ErrorResponseException;
 import com.education.gptask.entities.error.ErrorStatus;
 import com.education.gptask.entities.timer.Timer;
+import com.education.gptask.entities.timer.TimerStatus;
 import com.education.gptask.repositories.TimerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -17,16 +20,17 @@ public class TimerService {
     private final TimerRepository timerRepository;
     private final TimerMapper timerMapper;
 
-    public TimerDto getTimerByUserId(Long userId) {
-        return timerMapper.entityToDto(
-                timerRepository.findTimerByUserId(userId)
-                        .orElseThrow(() -> new ErrorResponseException(ErrorStatus.TIMER_ERROR))
+    public List<TimerDto> getTimersByUserId(Long userId) {
+        return timerMapper.entityListToDtoList(
+                timerRepository.findTimersByUser_Id(userId)
+                .orElseThrow(() -> new ErrorResponseException(ErrorStatus.TIMER_ERROR))
         );
     }
 
     public TimerDto getTimerById(Long timerId) {
         return timerMapper.entityToDto(
-                timerRepository.getReferenceById(timerId)
+                timerRepository.findById(timerId)
+                        .orElseThrow(() -> new ErrorResponseException(ErrorStatus.TIMER_ERROR))
         );
     }
 
@@ -45,9 +49,11 @@ public class TimerService {
         );
     }
 
-    public TimerDto updateTimerStatus(Long timerId, TimerDto timerDto) {
+    public TimerDto updateTimerStatus(Long timerId, String status) {
         return timerMapper.entityToDto(
-                timerRepository.save(new Timer().setId(timerId).setStatus(timerDto.getStatus()))
+                timerRepository.save(new Timer()
+                        .setId(timerId)
+                        .setStatus(TimerStatus.valueOf(status.toUpperCase())))
         );
     }
 

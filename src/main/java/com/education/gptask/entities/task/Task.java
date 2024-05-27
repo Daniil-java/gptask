@@ -1,6 +1,7 @@
 package com.education.gptask.entities.task;
 
 import com.education.gptask.entities.User;
+import com.education.gptask.entities.timer.Timer;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "tasks")
@@ -27,6 +29,12 @@ public class Task {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    @ManyToMany(mappedBy = "tasks",
+            fetch = FetchType.LAZY,
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE}
+    )
+    private Set<Timer> timers;
 
     @ManyToOne
     @JoinColumn(name = "parent_id")

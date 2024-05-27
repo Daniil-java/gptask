@@ -4,11 +4,13 @@ import com.education.gptask.entities.timer.TimerStatus;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import java.util.Set;
 @Data
 @Accessors(chain = true)
 public class TimerDto {
     private Long id;
     private UserDto user;
+    private Set<TaskDto> tasks;
     private TimerStatus status;
     private int workDuration;
     private int shortBreakDuration;
