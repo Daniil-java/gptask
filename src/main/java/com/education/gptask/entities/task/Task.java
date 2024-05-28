@@ -4,6 +4,7 @@ import com.education.gptask.entities.User;
 import com.education.gptask.entities.timer.Timer;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.Accessors;
@@ -17,7 +18,6 @@ import java.util.Set;
 @Entity
 @Table(name = "tasks")
 @Data
-@ToString(exclude = "parent")
 @NoArgsConstructor
 @Accessors(chain = true)
 public class Task {
@@ -34,9 +34,12 @@ public class Task {
             fetch = FetchType.LAZY,
             cascade = {CascadeType.PERSIST, CascadeType.MERGE}
     )
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Set<Timer> timers;
 
     @ManyToOne
+    @ToString.Exclude
     @JoinColumn(name = "parent_id")
     private Task parent;
 

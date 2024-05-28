@@ -34,8 +34,8 @@ public class Timer {
             fetch = FetchType.LAZY)
     @JoinTable(
             name = "timer_tasks",
-            joinColumns = @JoinColumn(name = "timer_id"),
-            inverseJoinColumns = @JoinColumn(name = "task_id")
+            joinColumns = @JoinColumn(name = "timer_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "task_id", referencedColumnName = "id")
     )
     private Set<Task> tasks;
 

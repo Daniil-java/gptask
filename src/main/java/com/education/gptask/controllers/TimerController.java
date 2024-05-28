@@ -3,6 +3,7 @@ package com.education.gptask.controllers;
 import com.education.gptask.dtos.TimerDto;
 import com.education.gptask.services.TimerService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,16 +22,16 @@ public class TimerController {
 
     @GetMapping("/{timerId}")
     public TimerDto getTimerById(@PathVariable Long timerId) {
-        return timerService.getTimerById(timerId);
+        return timerService.getTimerByIdResponse(timerId);
     }
 
     @PostMapping
-    public TimerDto createTimer(@RequestBody TimerDto timerDto) {
+    public TimerDto createTimer(@Validated @RequestBody TimerDto timerDto) {
         return timerService.createTimer(timerDto);
     }
 
     @PutMapping
-    public TimerDto updateTimer(@RequestBody TimerDto timerDto) {
+    public TimerDto updateTimer(@Validated @RequestBody TimerDto timerDto) {
         return timerService.updateTimer(timerDto);
     }
 
@@ -44,5 +45,18 @@ public class TimerController {
         timerService.deleteTimerById(timerId);
     }
 
+    @PostMapping("/{timerId}/tasks/{taskId}")
+    public TimerDto bindTaskToTimer(@PathVariable Long timerId, @PathVariable Long taskId) {
+        return timerService.bindTaskToTimer(timerId, taskId);
+    }
 
+    @DeleteMapping("/{timerId}/tasks/{taskId}")
+    public TimerDto unbindTaskFromTimer(@PathVariable Long timerId, @PathVariable Long taskId) {
+        return timerService.unbindTaskFromTimer(timerId, taskId);
+    }
+
+    @DeleteMapping("/{timerId}/tasks/")
+    public TimerDto unbindAllTaskToTimer(@PathVariable Long timerId) {
+        return timerService.unbindAllTasksFromTimer(timerId);
+    }
 }
