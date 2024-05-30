@@ -40,6 +40,7 @@ public class Task {
 
     @ManyToOne
     @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @JoinColumn(name = "parent_id")
     private Task parent;
 

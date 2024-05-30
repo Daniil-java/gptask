@@ -22,7 +22,7 @@ public class TimerController {
 
     @GetMapping("/{timerId}")
     public TimerDto getTimerById(@PathVariable Long timerId) {
-        return timerService.getTimerByIdResponse(timerId);
+        return timerService.getTimerDtoById(timerId);
     }
 
     @PostMapping

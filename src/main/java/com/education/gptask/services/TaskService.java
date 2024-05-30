@@ -23,13 +23,12 @@ public class TaskService {
     private final UserMapper userMapper;
 
     public List<TaskDto> getTasksByUserId(Long id) {
-        return taskMapper.entityListToDtoList(
-                taskRepository.findTasksByUserIdAndParentIsNull(id)
-                        .orElseThrow(() -> new ErrorResponseException(ErrorStatus.TASK_ERROR))
-        );
+        return taskRepository.findTasksByUserIdAndParentIsNull(id)
+                .map(taskMapper::entityListToDtoList)
+                .orElseThrow(() -> new ErrorResponseException(ErrorStatus.TASK_ERROR));
     }
 
-    public TaskDto getTaskByIdResponse(Long id) {
+    public TaskDto getTaskDtoById(Long id) {
         return taskMapper.entityToDto(getTaskById(id));
     }
 

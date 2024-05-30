@@ -16,3 +16,17 @@ CREATE TABLE IF NOT EXISTS timers
     updated                     timestamp,
     created                     timestamp DEFAULT current_timestamp
 );
+
+CREATE TABLE IF NOT EXISTS timer_tasks
+(
+    timer_id int NOT NULL REFERENCES timers(id) ON DELETE CASCADE,
+    task_id  int NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+    PRIMARY KEY (timer_id, task_id)
+);
+
+alter table tasks
+    alter column priority set default 'WOULD';
+
+alter table tasks
+    alter column status set default 'PLANNED';
+

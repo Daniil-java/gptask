@@ -26,13 +26,12 @@ public class TimerService {
     private final TimerMapper timerMapper;
 
     public List<TimerDto> getTimersByUserId(Long userId) {
-        return timerMapper.entityListToDtoList(
-                timerRepository.findTimersByUser_Id(userId)
-                .orElseThrow(() -> new ErrorResponseException(ErrorStatus.TIMER_ERROR))
-        );
+        return timerRepository.findTimersByUser_Id(userId)
+                .map(timerMapper::entityListToDtoList)
+                .orElseThrow(() -> new ErrorResponseException(ErrorStatus.TIMER_ERROR));
     }
 
-    public TimerDto getTimerByIdResponse(Long timerId) {
+    public TimerDto getTimerDtoById(Long timerId) {
         return timerMapper.entityToDto(getTimerById(timerId));
     }
 
@@ -57,11 +56,10 @@ public class TimerService {
     }
 
     public TimerDto updateTimerStatus(Long timerId, String status) {
+        Timer timer = getTimerById(timerId);
+        timer.setStatus(TimerStatus.valueOf(status));
         return timerMapper.entityToDto(
-                timerRepository.save(new Timer()
-                        .setId(timerId)
-                        .setStatus(TimerStatus.valueOf(status.toUpperCase())))
-        );
+                timerRepository.save(timer));
     }
 
     public void deleteTimerById(Long timerId) {

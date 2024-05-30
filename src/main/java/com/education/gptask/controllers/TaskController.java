@@ -22,7 +22,7 @@ public class TaskController {
 
     @GetMapping("/{taskId}")
     public TaskDto getTaskById(@PathVariable Long taskId) {
-        return taskService.getTaskByIdResponse(taskId);
+        return taskService.getTaskDtoById(taskId);
     }
 
     @PostMapping
