@@ -1,8 +1,10 @@
 package com.education.gptask.entities.task;
 
 import com.education.gptask.entities.User;
+import com.education.gptask.entities.timer.Timer;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.Accessors;
@@ -11,11 +13,11 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "tasks")
 @Data
-@ToString(exclude = "parent")
 @NoArgsConstructor
 @Accessors(chain = true)
 public class Task {
@@ -28,7 +30,17 @@ public class Task {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @ManyToMany(mappedBy = "tasks",
+            fetch = FetchType.LAZY,
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE}
+    )
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Set<Timer> timers;
+
     @ManyToOne
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @JoinColumn(name = "parent_id")
     private Task parent;
 

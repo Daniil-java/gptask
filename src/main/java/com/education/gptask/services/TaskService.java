@@ -22,15 +22,20 @@ public class TaskService {
     private final TaskMapper taskMapper;
     private final UserMapper userMapper;
 
-    public List<Task> getTasksByUserId(Long id) {
+    public List<TaskDto> getTasksByUserId(Long id) {
         return taskRepository.findTasksByUserIdAndParentIsNull(id)
+                .map(taskMapper::entityListToDtoList)
                 .orElseThrow(() -> new ErrorResponseException(ErrorStatus.TASK_ERROR));
     }
 
-    public TaskDto getTaskById(Long id) {
-        return taskMapper.entityToDto(
-                taskRepository.getReferenceById(id)
-        );
+    public TaskDto getTaskDtoById(Long id) {
+        return taskMapper.entityToDto(getTaskById(id));
+    }
+
+    public Task getTaskById(Long id) {
+        return taskRepository.findById(id)
+                .orElseThrow(() -> new ErrorResponseException(ErrorStatus.TASK_ERROR)
+                );
     }
 
     public TaskDto createTask(TaskDto taskDto) {
