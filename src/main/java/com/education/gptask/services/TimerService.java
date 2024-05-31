@@ -2,6 +2,7 @@ package com.education.gptask.services;
 
 import com.education.gptask.dtos.TimerDto;
 import com.education.gptask.dtos.mappers.TimerMapper;
+import com.education.gptask.entities.UserEntity;
 import com.education.gptask.entities.error.ErrorResponseException;
 import com.education.gptask.entities.error.ErrorStatus;
 import com.education.gptask.entities.task.Task;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -22,13 +24,25 @@ import java.util.Set;
 @Slf4j
 public class TimerService {
     private final TaskService taskService;
+    private final UserService userService;
     private final TimerRepository timerRepository;
     private final TimerMapper timerMapper;
 
-    public List<TimerDto> getTimersByUserId(Long userId) {
-        return timerRepository.findTimersByUser_Id(userId)
+    public List<TimerDto> getTimersDtoByUserId(Long userId) {
+        return timerRepository.findTimersByUserEntityId(userId)
                 .map(timerMapper::entityListToDtoList)
                 .orElseThrow(() -> new ErrorResponseException(ErrorStatus.TIMER_ERROR));
+    }
+    public List<Timer> getTimersByUserId(Long userId) {
+        Optional<List<Timer>> timers = timerRepository.findTimersByUserEntityId(userId);
+        if (timers.isPresent() && timers.get().size() != 0) {
+            return timers.get();
+        } else {
+            UserEntity user = userService.getUserByEntityId(userId);
+            List<Timer> timerList = new ArrayList<>();
+            timerList.add(new Timer().setUserEntity(user).setStatus(TimerStatus.PENDING));
+            return timerRepository.saveAll(timerList);
+        }
     }
 
     public TimerDto getTimerDtoById(Long timerId) {
@@ -55,11 +69,16 @@ public class TimerService {
         );
     }
 
-    public TimerDto updateTimerStatus(Long timerId, String status) {
+    public TimerDto updateTimerDtoStatus(Long timerId, String status) {
+        return timerMapper.entityToDto(
+                updateTimerStatus(timerId, status));
+    }
+
+    @Transactional
+    public Timer updateTimerStatus(Long timerId, String status) {
         Timer timer = getTimerById(timerId);
         timer.setStatus(TimerStatus.valueOf(status));
-        return timerMapper.entityToDto(
-                timerRepository.save(timer));
+        return timerRepository.save(timer);
     }
 
     public void deleteTimerById(Long timerId) {
@@ -70,8 +89,8 @@ public class TimerService {
     public TimerDto bindTaskToTimer(Long timerId, Long taskId) {
         Timer timer = getTimerById(timerId);
         Task task = taskService.getTaskById(taskId);
-        if (!timer.getUser().getId()
-                .equals(task.getUser().getId())) {
+        if (!timer.getUserEntity().getId()
+                .equals(task.getUserEntity().getId())) {
             throw new ErrorResponseException(ErrorStatus.TIMER_TASK_ERROR);
         }
         timer.getTasks().add(task);

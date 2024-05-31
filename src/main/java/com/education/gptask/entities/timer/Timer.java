@@ -1,6 +1,6 @@
 package com.education.gptask.entities.timer;
 
-import com.education.gptask.entities.User;
+import com.education.gptask.entities.UserEntity;
 import com.education.gptask.entities.task.Task;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -25,7 +25,7 @@ public class Timer {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    private User user;
+    private UserEntity userEntity;
 
     @Enumerated(EnumType.STRING)
     private TimerStatus status;

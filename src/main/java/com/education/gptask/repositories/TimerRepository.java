@@ -11,7 +11,7 @@ import java.util.Optional;
 @Repository
 public interface TimerRepository extends JpaRepository<Timer, Long> {
 
-    Optional<List<Timer>> findTimersByUser_Id(Long userId);
+    Optional<List<Timer>> findTimersByUserEntityId(Long userId);
 
     @EntityGraph(attributePaths = {"tasks"})
     Optional<Timer> findById(Long id);

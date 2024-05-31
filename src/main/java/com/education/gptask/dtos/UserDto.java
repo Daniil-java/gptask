@@ -9,4 +9,7 @@ import lombok.experimental.Accessors;
 public class UserDto {
     @NotNull(message = "User id can't be empty!")
     private Long id;
+    private Long telegramId;
+    private Long chatId;
+    private String username;
 }

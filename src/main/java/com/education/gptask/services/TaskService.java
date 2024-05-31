@@ -23,7 +23,7 @@ public class TaskService {
     private final UserMapper userMapper;
 
     public List<TaskDto> getTasksByUserId(Long id) {
-        return taskRepository.findTasksByUserIdAndParentIsNull(id)
+        return taskRepository.findTasksByUserEntityIdAndParentIsNull(id)
                 .map(taskMapper::entityListToDtoList)
                 .orElseThrow(() -> new ErrorResponseException(ErrorStatus.TASK_ERROR));
     }

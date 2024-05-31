@@ -1,6 +1,8 @@
 package com.education.gptask.telegram;
 
+import com.education.gptask.telegram.facades.TelegramBotFacade;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -17,20 +19,15 @@ public class TelegramBot extends TelegramLongPollingBot {
     public TelegramBot(@Value("${bot.token}") String botToken) {
         super(botToken);
     }
+    @Autowired
+    private TelegramBotFacade telegramBotFacade;
 
     @Override
     public void onUpdateReceived(Update update) {
-        if (!update.hasMessage()) return;
-
-        String message = update.getMessage().getText();
-        Long chatId = update.getMessage().getChatId();
-
-        sendMessage(chatId, message);
+        sendMessage(telegramBotFacade.handleUpdate(update));
     }
 
-    private void sendMessage(Long chatId, String text) {
-        String chatIdStr = String.valueOf(chatId);
-        SendMessage sendMessage = new SendMessage(chatIdStr, text);
+    private void sendMessage(SendMessage sendMessage) {
         try {
             execute(sendMessage);
         } catch (TelegramApiException e) {
