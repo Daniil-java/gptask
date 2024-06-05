@@ -51,6 +51,12 @@ public class Timer {
 
     private boolean isAutostartBreak;
 
+    private int telegramMessageId;
+
+    private LocalDateTime stopTime;
+
+    private int minuteToStop;
+
     @UpdateTimestamp
     private LocalDateTime updated;
 

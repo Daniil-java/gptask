@@ -23,18 +23,21 @@ public class UserService {
 
     @Transactional
     public UserEntity getOrCreateUser(User userInfo, BotState botState) {
-        return userRepository.findUserEntityByTelegramId(userInfo.getId())
-                .orElse(
-                        userRepository.save(new UserEntity()
-                                .setTelegramId(userInfo.getId())
-                                .setChatId(userInfo.getId())
-                                .setUsername(userInfo.getUserName())
-                                .setFirstname(userInfo.getFirstName())
-                                .setLastname(userInfo.getLastName())
-                                .setLanguageCode(userInfo.getLanguageCode())
-                                .setBotState(botState)
-                        )
-                );
+        Optional<UserEntity> userEntity = userRepository.findUserEntityByTelegramId(userInfo.getId());
+        if (userEntity.isPresent()) {
+            if (botState != null) userEntity.get().setBotState(botState);
+            return userRepository.save(userEntity.get());
+        } else {
+            return userRepository.save(new UserEntity()
+                    .setTelegramId(userInfo.getId())
+                    .setChatId(userInfo.getId())
+                    .setUsername(userInfo.getUserName())
+                    .setFirstname(userInfo.getFirstName())
+                    .setLastname(userInfo.getLastName())
+                    .setLanguageCode(userInfo.getLanguageCode())
+                    .setBotState(botState)
+            );
+        }
     }
 
     public UserEntity createUser(UserEntity userEntity) {

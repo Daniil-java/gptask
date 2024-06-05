@@ -14,10 +14,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -33,10 +36,14 @@ public class TimerService {
                 .map(timerMapper::entityListToDtoList)
                 .orElseThrow(() -> new ErrorResponseException(ErrorStatus.TIMER_ERROR));
     }
-    public List<Timer> getTimersByUserId(Long userId) {
+    public List<Timer> getTimersByUserId(Long userId, int messageId) {
         Optional<List<Timer>> timers = timerRepository.findTimersByUserEntityId(userId);
-        if (timers.isPresent() && timers.get().size() != 0) {
-            return timers.get();
+        if (timers.isPresent() && !timers.get().isEmpty()) {
+            for (Timer timer: timers.get()) {
+                timer.setTelegramMessageId(messageId);
+            }
+
+            return timerRepository.saveAll(timers.get());
         } else {
             UserEntity user = userService.getUserByEntityId(userId);
             List<Timer> timerList = new ArrayList<>();
@@ -78,7 +85,39 @@ public class TimerService {
     public Timer updateTimerStatus(Long timerId, String status) {
         Timer timer = getTimerById(timerId);
         timer.setStatus(TimerStatus.valueOf(status));
+        LocalDateTime stopTime = LocalDateTime.now();
+        switch (TimerStatus.valueOf(status)) {
+            case PENDING:
+                timer.setMinuteToStop(timer.getWorkDuration());
+                break;
+            case RUNNING:
+                //Время остановки
+                stopTime = stopTime.plusMinutes(timer.getMinuteToStop());
+                timer.setStopTime(stopTime);
+                break;
+            case PAUSED:
+                //Время до остановки
+                int timeToStop = (int) Duration.between(LocalDateTime.now(), timer.getStopTime()).getSeconds() / 60;
+                timer.setMinuteToStop(timeToStop);
+                break;
+            case LONG_BREAK:
+                break;
+            case SHORT_BREAK:
+                break;
+        }
         return timerRepository.save(timer);
+    }
+
+    //Return: null - if no timer has expired
+    public List<Timer> getExpiredTimersAndUpdate() {
+        Optional<List<Timer>> expiredTimers = timerRepository.findAllExpiredAndNotPending(LocalDateTime.now());
+        if (!expiredTimers.isPresent()) return null;
+
+        List<Long> ids = expiredTimers.get().stream().map(Timer::getId).collect(Collectors.toList());
+        if (!ids.isEmpty()) {
+            timerRepository.updateStatusToPending(ids);
+        }
+        return expiredTimers.get();
     }
 
     public void deleteTimerById(Long timerId) {
