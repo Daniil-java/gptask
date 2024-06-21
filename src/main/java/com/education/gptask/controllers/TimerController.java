@@ -17,7 +17,7 @@ public class TimerController {
 
     @GetMapping
     public List<TimerDto> getTimersByUserId(@RequestParam Long userId) {
-        return timerService.getTimersByUserId(userId);
+        return timerService.getTimersDtoByUserId(userId);
     }
 
     @GetMapping("/{timerId}")
@@ -32,12 +32,12 @@ public class TimerController {
 
     @PutMapping
     public TimerDto updateTimer(@Validated @RequestBody TimerDto timerDto) {
-        return timerService.updateTimer(timerDto);
+        return timerService.updateTimerDto(timerDto);
     }
 
     @PostMapping("/{timerId}/change-status")
     public TimerDto updateTimerStatus(@PathVariable Long timerId, @RequestParam String status) {
-        return timerService.updateTimerStatus(timerId, status);
+        return timerService.updateTimerDtoStatus(timerId, status);
     }
 
     @DeleteMapping("/{timerId}")

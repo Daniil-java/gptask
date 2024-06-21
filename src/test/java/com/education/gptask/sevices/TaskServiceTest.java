@@ -2,7 +2,7 @@ package com.education.gptask.sevices;
 
 import com.education.gptask.dtos.TaskDto;
 import com.education.gptask.dtos.UserDto;
-import com.education.gptask.entities.User;
+import com.education.gptask.entities.UserEntity;
 import com.education.gptask.entities.task.Priority;
 import com.education.gptask.entities.task.Status;
 import com.education.gptask.entities.task.Task;
@@ -23,7 +23,7 @@ class TaskServiceTest {
     private TaskRepository taskRepository;
 
     private final UserDto USER_DTO = new UserDto().setId(10001L);
-    private final User USER = new User().setId(10001L);
+    private final UserEntity USEREntity = new UserEntity().setId(10001L);
     private final TaskDto TASK_DTO_1 =
             new TaskDto()
                     .setPriority(Priority.MUST)
@@ -43,13 +43,13 @@ class TaskServiceTest {
             new Task()
                     .setPriority(Priority.MUST)
                     .setStatus(Status.IN_PROGRESS)
-                    .setUser(USER)
+                    .setUserEntity(USEREntity)
             ;
     private final Task TASK_2 =
             new Task()
                     .setPriority(Priority.MUST)
                     .setStatus(Status.IN_PROGRESS)
-                    .setUser(USER)
+                    .setUserEntity(USEREntity)
             ;
     private final List<Task> taskList = new ArrayList<>();
 

@@ -1,6 +1,6 @@
 package com.education.gptask.entities.task;
 
-import com.education.gptask.entities.User;
+import com.education.gptask.entities.UserEntity;
 import com.education.gptask.entities.timer.Timer;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -28,7 +28,7 @@ public class Task {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    private User user;
+    private UserEntity userEntity;
 
     @ManyToMany(mappedBy = "tasks",
             fetch = FetchType.LAZY,
@@ -44,7 +44,7 @@ public class Task {
     @JoinColumn(name = "parent_id")
     private Task parent;
 
-    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Task> childTasks;
 
     @Column(name = "name")

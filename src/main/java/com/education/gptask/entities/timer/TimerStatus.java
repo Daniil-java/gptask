@@ -8,7 +8,7 @@ import lombok.Getter;
 public enum TimerStatus {
     PENDING,
     RUNNING,
-    PAUSED,
+    PAUSED, SHORT_BREAK, LONG_BREAK,
     COMPLETED,
     STOPPED
 }

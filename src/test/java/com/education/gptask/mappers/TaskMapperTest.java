@@ -3,12 +3,11 @@ package com.education.gptask.mappers;
 import com.education.gptask.dtos.TaskDto;
 import com.education.gptask.dtos.UserDto;
 import com.education.gptask.dtos.mappers.TaskMapper;
-import com.education.gptask.entities.User;
+import com.education.gptask.entities.UserEntity;
 import com.education.gptask.entities.task.Priority;
 import com.education.gptask.entities.task.Status;
 import com.education.gptask.entities.task.Task;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +21,7 @@ class TaskMapperTest {
     @Autowired
     private TaskMapper taskMapper;
     private final UserDto USER_DTO = new UserDto().setId(1L);
-    private final User USER = new User().setId(1L);
+    private final UserEntity USEREntity = new UserEntity().setId(1L);
     private final TaskDto TASK_DTO_1 =
             new TaskDto()
                     .setName("name")
@@ -45,14 +44,14 @@ class TaskMapperTest {
                     .setName("name")
                     .setPriority(Priority.MUST)
                     .setStatus(Status.DONE)
-                    .setUser(USER)
+                    .setUserEntity(USEREntity)
             ;
     private final Task TASK_2 =
             new Task()
                     .setName("name")
                     .setPriority(Priority.MUST)
                     .setStatus(Status.DONE)
-                    .setUser(USER)
+                    .setUserEntity(USEREntity)
             ;
     private final List<Task> taskList = new ArrayList<>();
 
@@ -80,7 +79,7 @@ class TaskMapperTest {
         Assertions.assertEquals(taskDto.getName(), task.getName());
         Assertions.assertEquals(taskDto.getPriority(), task.getPriority());
         Assertions.assertEquals(taskDto.getStatus(), task.getStatus());
-        Assertions.assertEquals(taskDto.getUser().getId(), task.getUser().getId());
+        Assertions.assertEquals(taskDto.getUser().getId(), task.getUserEntity().getId());
         Assertions.assertEquals(task.getChildTasks().size(), 2);
         Assertions.assertEquals(task.getChildTasks().get(0).getPriority(), taskDtoList.get(0).getPriority());
     }
@@ -91,7 +90,7 @@ class TaskMapperTest {
                 .setName("name")
                 .setPriority(Priority.MUST)
                 .setStatus(Status.DONE)
-                .setUser(USER)
+                .setUserEntity(USEREntity)
                 .setChildTasks(taskList);
 
         TaskDto taskDto = taskMapper.entityToDto(task);
@@ -100,7 +99,7 @@ class TaskMapperTest {
         Assertions.assertEquals(taskDto.getName(), task.getName());
         Assertions.assertEquals(taskDto.getPriority(), Priority.MUST);
         Assertions.assertEquals(taskDto.getStatus(), Status.DONE);
-        Assertions.assertEquals(taskDto.getUser().getId(), task.getUser().getId());
+        Assertions.assertEquals(taskDto.getUser().getId(), task.getUserEntity().getId());
         Assertions.assertEquals(taskDto.getChildTasks().size(), 2);
         Assertions.assertEquals(taskDto.getChildTasks().get(0).getPriority(), taskList.get(0).getPriority());
     }
