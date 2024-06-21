@@ -1,4 +1,4 @@
-package com.education.gptask.telegram.handlers.timer;
+package com.education.gptask.telegram.handlers.task;
 
 import com.education.gptask.entities.UserEntity;
 import com.education.gptask.telegram.enteties.BotState;
@@ -10,16 +10,17 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 
 @Component
 @AllArgsConstructor
-public class TimerStopHandler implements MessageHandler {
-    private final TimerHandler timerHandler;
+public class TaskMainMenuHandler implements MessageHandler {
+    private final TaskHandler taskHandler;
 
     @Override
     public BotApiMethod handle(Message message, UserEntity userEntity) {
-        return timerHandler.handle(message, userEntity);
+        userEntity.setBotState(BotState.TASK_MAIN_MENU);
+        return taskHandler.handle(message, userEntity);
     }
 
     @Override
     public BotState getHandlerName() {
-        return BotState.TIMER_STOP;
+        return BotState.TASK_MAIN_MENU;
     }
 }

@@ -31,7 +31,7 @@ public class Timer {
     private TimerStatus status;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE},
-            fetch = FetchType.LAZY)
+            fetch = FetchType.EAGER)
     @JoinTable(
             name = "timer_tasks",
             joinColumns = @JoinColumn(name = "timer_id", referencedColumnName = "id"),
@@ -50,6 +50,8 @@ public class Timer {
     private boolean isAutostartWork;
 
     private boolean isAutostartBreak;
+
+    private int interval;
 
     private int telegramMessageId;
 

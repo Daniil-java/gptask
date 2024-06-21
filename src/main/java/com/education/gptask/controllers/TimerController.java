@@ -32,7 +32,7 @@ public class TimerController {
 
     @PutMapping
     public TimerDto updateTimer(@Validated @RequestBody TimerDto timerDto) {
-        return timerService.updateTimer(timerDto);
+        return timerService.updateTimerDto(timerDto);
     }
 
     @PostMapping("/{timerId}/change-status")

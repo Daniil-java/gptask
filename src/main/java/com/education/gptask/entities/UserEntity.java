@@ -1,5 +1,6 @@
 package com.education.gptask.entities;
 
+import com.education.gptask.entities.task.Task;
 import com.education.gptask.telegram.enteties.BotState;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -26,6 +27,9 @@ public class UserEntity {
     private String firstname;
     private String lastname;
     private String languageCode;
+    private Long lastUpdatedTaskId;
+    private Long lastUpdatedTaskMessageId;
+    private Long lastUpdatedTimerSettingsMessageId;
     @CreationTimestamp
     private LocalDateTime created;
 }

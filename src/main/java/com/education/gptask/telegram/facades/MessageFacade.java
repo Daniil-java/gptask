@@ -20,38 +20,35 @@ public class MessageFacade {
     private final InputMessageHandler inputMessageHandler;
 
     public BotApiMethod handleUpdate(Update update) {
-        BotApiMethod replyMessage = null;
-        Message message = null;
-
         if (update.hasCallbackQuery()) {
             CallbackQuery callbackQuery = update.getCallbackQuery();
             log.info("New callbackQuery from User: {}, userId: {}, with data: {}",
                     update.getCallbackQuery().getFrom().getUserName(),
                     callbackQuery.getFrom().getId(), update.getCallbackQuery().getData());
 
-            message = callbackQuery.getMessage();
-            message.setText(callbackQuery.getData());
-            message.setFrom(callbackQuery.getFrom());
+            Message message = callbackQuery.getMessage();
             message.setMessageId(callbackQuery.getMessage().getMessageId());
+            message.setFrom(callbackQuery.getFrom());
+            message.setText(callbackQuery.getData());
+            return handleInputMessage(message);
         } else {
-            message = update.getMessage();
+            Message message = update.getMessage();
             log.info("New message from User:{}, chatId: {}, messageId: {},  with text: {}",
                     message.getFrom().getUserName(),
                     message.getChatId(),
                     message.getMessageId(),
                     message.getText()
             );
+            return handleInputMessage(message);
         }
-        if (message != null && message.hasText()) {
-            replyMessage = handleInputMessage(message);
-        }
-
-        return replyMessage;
     }
 
     private BotApiMethod handleInputMessage(Message message) {
         String inputMsg = message.getText();
-        BotState botState = BotState.fromCommand(inputMsg);
+        BotState botState = null;
+        if (!BotState.fromCommand(inputMsg).equals(BotState.PROCESSING)) {
+            botState = BotState.fromCommand(message.getText());
+        }
         UserEntity userEntity = userService.getOrCreateUser(message.getFrom(), botState);
         return inputMessageHandler.processInputMessage(message, userEntity);
     }

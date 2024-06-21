@@ -1,6 +1,5 @@
 package com.education.gptask.services;
 
-import com.education.gptask.dtos.mappers.UserMapper;
 import com.education.gptask.entities.UserEntity;
 import com.education.gptask.entities.error.ErrorResponseException;
 import com.education.gptask.entities.error.ErrorStatus;
@@ -19,13 +18,17 @@ import java.util.Optional;
 @Slf4j
 public class UserService {
     private final UserRepository userRepository;
-    private final UserMapper userMapper;
 
+    public UserEntity updateUserEntity(UserEntity userEntity) {
+        return userRepository.save(userEntity);
+    }
     @Transactional
     public UserEntity getOrCreateUser(User userInfo, BotState botState) {
         Optional<UserEntity> userEntity = userRepository.findUserEntityByTelegramId(userInfo.getId());
         if (userEntity.isPresent()) {
-            if (botState != null) userEntity.get().setBotState(botState);
+            if (botState != null) {
+                userEntity.get().setBotState(botState);
+            }
             return userRepository.save(userEntity.get());
         } else {
             return userRepository.save(new UserEntity()

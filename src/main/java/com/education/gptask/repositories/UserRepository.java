@@ -10,6 +10,5 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
     Optional<UserEntity> findUserByChatId(Long chatId);
-
     Optional<UserEntity> findUserEntityByTelegramId(Long telegramId);
 }

@@ -1,8 +1,9 @@
-package com.education.gptask.telegram.handlers.timer;
+package com.education.gptask.telegram.handlers.timer.controls;
 
 import com.education.gptask.entities.UserEntity;
 import com.education.gptask.telegram.enteties.BotState;
 import com.education.gptask.telegram.handlers.MessageHandler;
+import com.education.gptask.telegram.handlers.timer.TimerHandler;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
@@ -11,6 +12,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Component
@@ -26,9 +28,11 @@ public class TimerPauseHandler implements MessageHandler {
     public static InlineKeyboardMarkup getInlineMessageButtons() {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
 
+        InlineKeyboardButton tasksListButton = new InlineKeyboardButton("Задачи");
         InlineKeyboardButton startButton = new InlineKeyboardButton("Старт");
         InlineKeyboardButton stopButton = new InlineKeyboardButton("Стоп");
 
+        tasksListButton.setCallbackData(BotState.TIMER_TASKS_LIST.getCommand());
         startButton.setCallbackData(BotState.TIMER_START.getCommand());
         stopButton.setCallbackData(BotState.TIMER_STOP.getCommand());
 
@@ -37,6 +41,7 @@ public class TimerPauseHandler implements MessageHandler {
         row1.add(stopButton);
 
         List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
+        rowList.add(Arrays.asList(tasksListButton));
         rowList.add(row1);
 
         inlineKeyboardMarkup.setKeyboard(rowList);

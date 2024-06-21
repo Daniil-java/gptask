@@ -44,7 +44,7 @@ public class Task {
     @JoinColumn(name = "parent_id")
     private Task parent;
 
-    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Task> childTasks;
 
     @Column(name = "name")

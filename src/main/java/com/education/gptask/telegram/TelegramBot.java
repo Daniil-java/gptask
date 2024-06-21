@@ -9,6 +9,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
@@ -33,9 +35,28 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendMessage(messageFacade.handleUpdate(update));
     }
 
-    private void sendMessage(BotApiMethod sendMessage) {
+    public void sendMessage(BotApiMethod sendMessage) {
         try {
             execute(sendMessage);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Message sendReturnedMessage(SendMessage sendMessage) {
+        try {
+            return execute(sendMessage);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private void sendMessage(List<BotApiMethod> sendMessage) {
+        try {
+            for (BotApiMethod method: sendMessage) {
+                execute(method);
+            }
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
@@ -45,9 +66,11 @@ public class TelegramBot extends TelegramLongPollingBot {
     public void checkTimesTimeStatus() {
         log.info("Schedule timer checker is starting!");
         List<BotApiMethod> messages = timerScheduleProcessor.checkTimesTimeStatus();
-        if (messages == null) return;
-        for (BotApiMethod msg: messages) {
-            sendMessage(msg);
+        if (messages != null && !messages.isEmpty()) {
+            log.info("Expired timer list size: " + messages.size());
+            sendMessage(messages);
+        } else {
+            log.info("Expired timer list is empty");
         }
     }
 
