@@ -1,6 +1,6 @@
 package com.education.gptask.services;
 
-import com.education.gptask.configurations.OpenAiApiProperties;
+import com.education.gptask.configurations.OpenAiKeyConfiguration;
 import com.education.gptask.dtos.TaskDto;
 import com.education.gptask.dtos.openai.OpenAiChatCompletionRequest;
 import com.education.gptask.dtos.openai.OpenAiChatCompletionResponse;
@@ -19,7 +19,7 @@ import java.util.List;
 @Slf4j
 public class OpenAiApiFeignService {
     private final OpenAiFeignClient openAiFeignClient;
-    private final OpenAiApiProperties openAiApiProperties;
+    private final OpenAiKeyConfiguration openAiKeyConfiguration;
 
     public List<TaskDto> generateSubtasks(String name, String comment) throws JsonProcessingException {
 
@@ -40,7 +40,7 @@ public class OpenAiApiFeignService {
                 "Комментарий: \"%s\"", name, comment);
         OpenAiChatCompletionResponse response =
                 openAiFeignClient.generate(
-                        openAiApiProperties.getOpenAiKey(),
+                        "Bearer " + openAiKeyConfiguration.getKey(),
                         OpenAiChatCompletionRequest.makeRequest(
                                 request)
                 );
