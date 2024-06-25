@@ -40,5 +40,10 @@ public class TaskController {
         taskService.deleteTaskById(taskId);
     }
 
+    @PostMapping("/subtasks/generate")
+    public List<TaskDto> generateSubtasks(@Validated @RequestBody TaskDto taskDto) {
+        return taskService.generateSubtasks(taskDto);
+    }
+
 
 }
