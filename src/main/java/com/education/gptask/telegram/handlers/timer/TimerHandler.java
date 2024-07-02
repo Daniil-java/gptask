@@ -8,8 +8,6 @@ import com.education.gptask.services.TimerService;
 import com.education.gptask.telegram.TelegramBot;
 import com.education.gptask.telegram.enteties.BotState;
 import com.education.gptask.telegram.handlers.MessageHandler;
-import com.education.gptask.telegram.handlers.timer.controls.TimerPauseHandler;
-import com.education.gptask.telegram.handlers.timer.controls.TimerStartHandler;
 import com.education.gptask.telegram.utils.builders.BotApiMethodBuilder;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -22,6 +20,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Component
@@ -37,7 +36,7 @@ public class TimerHandler implements MessageHandler {
         SendMessage replyMessage = new SendMessage(String.valueOf(chatId),
                 "Что-то пошло не так ¯\\_(ツ)_/¯");
 
-        Timer timer = timerService.getTimersByUserId(userEntity.getId()).get(0);
+        Timer timer = timerService.getOrCreateTimerByUserId(userEntity.getId()).get(0);
 
         if (botState.equals(BotState.TIMER)) {
             replyMessage.setReplyMarkup(getInlineMessageButtons());
@@ -56,8 +55,8 @@ public class TimerHandler implements MessageHandler {
             EditMessageText editMessageText = BotApiMethodBuilder
                     .makeEditMessageText(chatId, timer.getTelegramMessageId(), getTimerInfo(timer));
             switch (timer.getStatus()) {
-                case RUNNING: editMessageText.setReplyMarkup(TimerStartHandler.getInlineMessageButtons());
-                case PAUSED: editMessageText.setReplyMarkup(TimerPauseHandler.getInlineMessageButtons());
+                case RUNNING: editMessageText.setReplyMarkup(TimerHandler.getInlineMessageStartButtons());
+                case PAUSED: editMessageText.setReplyMarkup(getInlineMessagePauseButtons());
                 case PENDING: editMessageText.setReplyMarkup(getInlineMessageButtons());
             }
             return editMessageText;
@@ -78,7 +77,7 @@ public class TimerHandler implements MessageHandler {
             EditMessageText editMessageText = BotApiMethodBuilder
                     .makeEditMessageText(chatId, messageId,
                             getTimerInfo(timer));
-            editMessageText.setReplyMarkup(TimerStartHandler.getInlineMessageButtons());
+            editMessageText.setReplyMarkup(getInlineMessageStartButtons());
             return editMessageText;
         }
 
@@ -86,7 +85,7 @@ public class TimerHandler implements MessageHandler {
             timer = timerService.updateTimerStatus(timer.getId(), TimerStatus.PAUSED.name());
             EditMessageText editMessageText = BotApiMethodBuilder
                     .makeEditMessageText(chatId, messageId, getTimerInfo(timer));
-            editMessageText.setReplyMarkup(TimerPauseHandler.getInlineMessageButtons());
+            editMessageText.setReplyMarkup(TimerHandler.getInlineMessagePauseButtons());
             return editMessageText;
         }
         timerService.getTimersByUserId(userEntity.getId(), telegramBot.sendReturnedMessage(replyMessage).getMessageId());
@@ -109,19 +108,59 @@ public class TimerHandler implements MessageHandler {
 
     public static String getTimerInfo(Timer timer) {
         StringBuilder stringBuilder = new StringBuilder();
-        for (Task task: timer.getTasks()) {
-            stringBuilder.append(task.getId() + "\n" + task.getName() + "\n" + task.getComment() + "\n\n");
+        if (timer.getTasks() != null && !timer.getTasks().isEmpty()) {
+            for (Task task: timer.getTasks()) {
+                stringBuilder.append(task.getId() + "\n" + task.getName() + "\n" + task.getComment() + "\n\n");
+            }
         }
         stringBuilder.append(timer.getStatus());
         return stringBuilder.toString();
     }
 
-    private EditMessageText makeEditMessageText(Long chatId, int messageId, Timer timer) {
-        EditMessageText editMessageText = new EditMessageText();
-        editMessageText.setChatId(chatId);
-        editMessageText.setMessageId(messageId);
-        editMessageText.setText(timer.getStatus().name());
-        return editMessageText;
+    public static InlineKeyboardMarkup getInlineMessageStartButtons() {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+
+        InlineKeyboardButton tasksListButton = new InlineKeyboardButton("Задачи");
+        InlineKeyboardButton pauseButton = new InlineKeyboardButton("Пауза");
+        InlineKeyboardButton stopButton = new InlineKeyboardButton("Стоп");
+
+        tasksListButton.setCallbackData(BotState.TIMER_TASKS_LIST.getCommand());
+        pauseButton.setCallbackData(BotState.TIMER_PAUSE.getCommand());
+        stopButton.setCallbackData(BotState.TIMER_STOP.getCommand());
+
+        List<InlineKeyboardButton> row1 = new ArrayList<>();
+        row1.add(pauseButton);
+        row1.add(stopButton);
+
+        List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
+        rowList.add(Arrays.asList(tasksListButton));
+        rowList.add(row1);
+
+        inlineKeyboardMarkup.setKeyboard(rowList);
+        return inlineKeyboardMarkup;
+    }
+
+    public static InlineKeyboardMarkup getInlineMessagePauseButtons() {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+
+        InlineKeyboardButton tasksListButton = new InlineKeyboardButton("Задачи");
+        InlineKeyboardButton startButton = new InlineKeyboardButton("Старт");
+        InlineKeyboardButton stopButton = new InlineKeyboardButton("Стоп");
+
+        tasksListButton.setCallbackData(BotState.TIMER_TASKS_LIST.getCommand());
+        startButton.setCallbackData(BotState.TIMER_START.getCommand());
+        stopButton.setCallbackData(BotState.TIMER_STOP.getCommand());
+
+        List<InlineKeyboardButton> row1 = new ArrayList<>();
+        row1.add(startButton);
+        row1.add(stopButton);
+
+        List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
+        rowList.add(Arrays.asList(tasksListButton));
+        rowList.add(row1);
+
+        inlineKeyboardMarkup.setKeyboard(rowList);
+        return inlineKeyboardMarkup;
     }
 
     public static InlineKeyboardMarkup getInlineMessageButtons() {
@@ -145,7 +184,9 @@ public class TimerHandler implements MessageHandler {
     }
 
     @Override
-    public BotState getHandlerName() {
-        return BotState.TIMER;
+    public List<BotState> getHandlerListName() {
+        return Arrays.asList(
+                BotState.TIMER, BotState.TIMER_START, BotState.TIMER_PAUSE, BotState.TIMER_STOP, BotState.TIMER_STATUS);
+
     }
 }

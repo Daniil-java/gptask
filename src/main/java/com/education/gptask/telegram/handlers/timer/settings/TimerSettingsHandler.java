@@ -30,7 +30,7 @@ public class TimerSettingsHandler implements MessageHandler {
     private final TelegramBot telegramBot;
     private final TimerService timerService;
 
-    private final String SETTINGS_MSG = "Choose message option";
+    private static final String SETTINGS_MSG = "Choose message option";
 
     @Override
     public BotApiMethod handle(Message message, UserEntity userEntity) {
@@ -162,7 +162,11 @@ public class TimerSettingsHandler implements MessageHandler {
     }
 
     @Override
-    public BotState getHandlerName() {
-        return BotState.TIMER_SETTINGS;
+    public List<BotState> getHandlerListName() {
+        return Arrays.asList(
+                BotState.TIMER_SETTINGS,
+                BotState.TIMER_SETTINGS_WORK, BotState.TIMER_SETTINGS_LBREAK,
+                BotState.TIMER_SETTINGS_LBREAK_INTERVAL, BotState.TIMER_SETTINGS_AUTOSTART_WORK,
+                BotState.TIMER_SETTINGS_AUTOSTART_BREAK, BotState.TIMER_SETTINGS_SBREAK);
     }
 }

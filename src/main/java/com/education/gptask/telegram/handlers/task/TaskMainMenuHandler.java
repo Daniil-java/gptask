@@ -8,6 +8,9 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
+import java.util.Arrays;
+import java.util.List;
+
 @Component
 @AllArgsConstructor
 public class TaskMainMenuHandler implements MessageHandler {
@@ -20,7 +23,7 @@ public class TaskMainMenuHandler implements MessageHandler {
     }
 
     @Override
-    public BotState getHandlerName() {
-        return BotState.TASK_MAIN_MENU;
+    public List<BotState> getHandlerListName() {
+        return Arrays.asList(BotState.TASK_MAIN_MENU);
     }
 }

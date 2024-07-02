@@ -51,7 +51,7 @@ public class TimerTasksListHandler implements MessageHandler {
                 userService.updateUserEntity(userEntity);
                 return handle(message, userEntity);
             } else {
-                editMessageText.setReplyMarkup(TimerTasksListUnbindHandler.getInlineMessageButtons(timer));
+                editMessageText.setReplyMarkup(getInlineMessageUnbindButtons(timer));
             }
             return editMessageText;
         }
@@ -65,7 +65,7 @@ public class TimerTasksListHandler implements MessageHandler {
                 userService.updateUserEntity(userEntity);
                 return handle(message, userEntity);
             } else {
-                editMessageText.setReplyMarkup(TimerTasksListDoneHandler.getInlineMessageButtons(timer));
+                editMessageText.setReplyMarkup(getInlineMessageDoneButtons(timer));
                 return editMessageText;
             }
 
@@ -94,8 +94,47 @@ public class TimerTasksListHandler implements MessageHandler {
         return inlineKeyboardMarkup;
     }
 
+    public static InlineKeyboardMarkup getInlineMessageUnbindButtons(Timer timer) {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
+
+        for (Task task: timer.getTasks()) {
+            InlineKeyboardButton button = new InlineKeyboardButton(task.getId().toString());
+            button.setCallbackData("/delete" + task.getId());
+            rowList.add(Arrays.asList(button));
+        }
+
+        InlineKeyboardButton button = new InlineKeyboardButton("Назад");
+        button.setCallbackData(BotState.TIMER_TASKS_LIST.getCommand());
+        rowList.add(Arrays.asList(button));
+
+        inlineKeyboardMarkup.setKeyboard(rowList);
+        return inlineKeyboardMarkup;
+    }
+
+    public static InlineKeyboardMarkup getInlineMessageDoneButtons(Timer timer) {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
+
+        for (Task task: timer.getTasks()) {
+            if (task.getStatus().equals(Status.DONE)) continue;
+            InlineKeyboardButton button = new InlineKeyboardButton(task.getId().toString());
+            button.setCallbackData("/done" + task.getId());
+            rowList.add(Arrays.asList(button));
+        }
+
+        InlineKeyboardButton button = new InlineKeyboardButton("Назад");
+        button.setCallbackData(BotState.TIMER_TASKS_LIST.getCommand());
+        rowList.add(Arrays.asList(button));
+
+        inlineKeyboardMarkup.setKeyboard(rowList);
+        return inlineKeyboardMarkup;
+    }
+
     @Override
-    public BotState getHandlerName() {
-        return BotState.TIMER_TASKS_LIST;
+    public List<BotState> getHandlerListName() {
+        return Arrays.asList(
+                BotState.TIMER_TASKS_LIST, BotState.TIMER_TASKS_LIST_DONE, BotState.TIMER_TASKS_LIST_DELETE
+        );
     }
 }

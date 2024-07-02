@@ -9,6 +9,9 @@ import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
+import java.util.Arrays;
+import java.util.List;
+
 @Component
 @AllArgsConstructor
 public class NotificationHandler implements MessageHandler {
@@ -18,7 +21,7 @@ public class NotificationHandler implements MessageHandler {
     }
 
     @Override
-    public BotState getHandlerName() {
-        return BotState.NOTIFICATION_TIMER_ALERT;
+    public List<BotState> getHandlerListName() {
+        return Arrays.asList(BotState.NOTIFICATION_TIMER_ALERT);
     }
 }

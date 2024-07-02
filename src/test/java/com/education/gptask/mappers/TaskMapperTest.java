@@ -21,7 +21,7 @@ class TaskMapperTest {
     @Autowired
     private TaskMapper taskMapper;
     private final UserDto USER_DTO = new UserDto().setId(1L);
-    private final UserEntity USEREntity = new UserEntity().setId(1L);
+    private final UserEntity USER_ENTITY = new UserEntity().setId(1L);
     private final TaskDto TASK_DTO_1 =
             new TaskDto()
                     .setName("name")
@@ -44,14 +44,14 @@ class TaskMapperTest {
                     .setName("name")
                     .setPriority(Priority.MUST)
                     .setStatus(Status.DONE)
-                    .setUserEntity(USEREntity)
+                    .setUserEntity(USER_ENTITY)
             ;
     private final Task TASK_2 =
             new Task()
                     .setName("name")
                     .setPriority(Priority.MUST)
                     .setStatus(Status.DONE)
-                    .setUserEntity(USEREntity)
+                    .setUserEntity(USER_ENTITY)
             ;
     private final List<Task> taskList = new ArrayList<>();
 
@@ -90,7 +90,7 @@ class TaskMapperTest {
                 .setName("name")
                 .setPriority(Priority.MUST)
                 .setStatus(Status.DONE)
-                .setUserEntity(USEREntity)
+                .setUserEntity(USER_ENTITY)
                 .setChildTasks(taskList);
 
         TaskDto taskDto = taskMapper.entityToDto(task);

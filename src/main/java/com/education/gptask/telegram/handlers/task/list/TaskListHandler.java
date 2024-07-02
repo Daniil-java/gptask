@@ -46,8 +46,13 @@ public class TaskListHandler implements MessageHandler {
                 "Что-то пошло не так ¯\\_(ツ)_/¯");
 
         if (botState.equals(BotState.TASK_LIST)) {
-            if (!userAnswer.isEmpty() && userAnswer.matches("[0-9]+")) {
-                long taskId = Long.parseLong(userAnswer);
+            if (!userAnswer.isEmpty() && userAnswer.matches("^\\d$")) {
+                long taskId;
+                try {
+                    taskId = Long.parseLong(userAnswer);
+                } catch (NumberFormatException e) {
+                    return replyMessage;
+                }
                 Task task = taskService.getTaskById(taskId);
                 EditMessageText editMessageText = BotApiMethodBuilder
                         .makeEditMessageText(chatId, Math.toIntExact(userEntity.getLastUpdatedTaskMessageId()), task.toString());
@@ -104,13 +109,12 @@ public class TaskListHandler implements MessageHandler {
                 userEntity.setBotState(BotState.TASK_CREATE_SUBTASK);
                 userService.updateUserEntity(userEntity);
 
-                EditMessageText editMessageText = BotApiMethodBuilder
+                return BotApiMethodBuilder
                         .makeEditMessageText(
                                 chatId,
                                 Math.toIntExact(userEntity.getLastUpdatedTaskMessageId()),
                                 "Give a name#comment"
                         );
-                return editMessageText;
             }
 
         }
@@ -165,7 +169,7 @@ public class TaskListHandler implements MessageHandler {
     }
 
     @Override
-    public BotState getHandlerName() {
-        return BotState.TASK_LIST;
+    public List<BotState> getHandlerListName() {
+        return Arrays.asList(BotState.TASK_LIST, BotState.TASK_CREATE_SUBTASK);
     }
 }

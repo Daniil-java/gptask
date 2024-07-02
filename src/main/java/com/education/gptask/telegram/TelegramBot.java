@@ -52,23 +52,20 @@ public class TelegramBot extends TelegramLongPollingBot {
         return null;
     }
 
-    private void sendMessage(List<BotApiMethod> sendMessage) {
-        try {
-            for (BotApiMethod method: sendMessage) {
-                execute(method);
-            }
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
-
     @Scheduled(cron = "0 * * * * *")
     public void checkTimesTimeStatus() {
         log.info("Schedule timer checker is starting!");
         List<BotApiMethod> messages = timerScheduleProcessor.checkTimesTimeStatus();
         if (messages != null && !messages.isEmpty()) {
             log.info("Expired timer list size: " + messages.size());
-            sendMessage(messages);
+            for (BotApiMethod message: messages) {
+                try {
+                    Thread.sleep(1000);
+                    sendMessage(message);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         } else {
             log.info("Expired timer list is empty");
         }

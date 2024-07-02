@@ -22,6 +22,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Component
@@ -64,10 +65,8 @@ public class TaskCreationHandler implements MessageHandler {
             userEntity.setBotState(BotState.TASK_CREATE_NAME);
             userService.updateUserEntity(userEntity);
 
-            EditMessageText editMessageText = BotApiMethodBuilder
+            return BotApiMethodBuilder
                     .makeEditMessageText(chatId, messageId, "Give a name for task");
-
-            return editMessageText;
         }
 
 
@@ -76,7 +75,7 @@ public class TaskCreationHandler implements MessageHandler {
             String name = userAnswer, comment = null;
             if (!userAnswer.isEmpty() && userAnswer.indexOf("#") != -1) {
                 name = userAnswer.substring(0, userAnswer.indexOf("#"));
-                comment = userAnswer.substring(userAnswer.indexOf("#") + 1, userAnswer.length() - 1);
+                comment = userAnswer.substring(userAnswer.indexOf("#") + 1, userAnswer.length());
             }
             task.setName(name)
                     .setComment(comment);
@@ -127,9 +126,8 @@ public class TaskCreationHandler implements MessageHandler {
         return keyboardMarkup;
     }
 
-
     @Override
-    public BotState getHandlerName() {
-        return BotState.TASK_CREATE;
+    public List<BotState> getHandlerListName() {
+        return Arrays.asList(BotState.TASK_CREATE, BotState.TASK_CREATE_NAME, BotState.TASK_CREATE_PRIORITY);
     }
 }

@@ -19,6 +19,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Component
@@ -37,14 +38,17 @@ public class TaskHandler implements MessageHandler {
 
         if (botState.equals(BotState.TASK)) {
             userEntity.setBotState(BotState.TASK_LIST);
+            if (userEntity.getLastUpdatedTaskMessageId() != null) {
+                DeleteMessage deleteLastTaskMessage =
+                        new DeleteMessage(
+                                String.valueOf(chatId),
+                                Math.toIntExact(userEntity.getLastUpdatedTaskMessageId())
+                        );
+                telegramBot.sendMessage(deleteLastTaskMessage);
+            }
             DeleteMessage deleteMessage = new DeleteMessage(String.valueOf(chatId), messageId);
-            DeleteMessage deleteLastTaskMessage =
-                    new DeleteMessage(
-                            String.valueOf(chatId),
-                            Math.toIntExact(userEntity.getLastUpdatedTaskMessageId())
-                    );
             telegramBot.sendMessage(deleteMessage);
-            telegramBot.sendMessage(deleteLastTaskMessage);
+
             Message futureMessage = telegramBot.sendReturnedMessage(getList(userEntity, chatId));
             userEntity.setLastUpdatedTaskMessageId(Long.valueOf(futureMessage.getMessageId()));
             userService.updateUserEntity(userEntity);
@@ -95,7 +99,7 @@ public class TaskHandler implements MessageHandler {
     }
 
     @Override
-    public BotState getHandlerName() {
-        return BotState.TASK;
+    public List<BotState> getHandlerListName() {
+        return Arrays.asList(BotState.TASK);
     }
 }

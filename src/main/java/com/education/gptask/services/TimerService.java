@@ -16,11 +16,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.education.gptask.entities.timer.TimerStatus.PAUSED;
 import static com.education.gptask.entities.timer.TimerStatus.PENDING;
@@ -42,17 +40,17 @@ public class TimerService {
         return timerRepository.findTimersByUserEntityId(userId)
                 .orElseThrow(() -> new ErrorResponseException(ErrorStatus.TIMER_ERROR));
     }
+    public List<Timer> getOrCreateTimerByUserId(long userId) {
+        return getTimersByUserId(userId, 0);
+    }
     public List<Timer> getTimersByUserId(Long userId, int messageId) {
         Optional<List<Timer>> timers = timerRepository.findTimersByUserEntityId(userId);
         if (timers.isPresent() && !timers.get().isEmpty()) {
-            for (Timer timer: timers.get()) {
-                timer.setTelegramMessageId(messageId);
-            }
-
+            timers.get().get(0).setTelegramMessageId(messageId);
             return timerRepository.saveAll(timers.get());
         } else {
             UserEntity user = userService.getUserByEntityId(userId);
-            List<Timer> timerList = new ArrayList<>();
+            List<Timer> timerList = timers.get();
             timerList.add(new Timer().setUserEntity(user).setStatus(TimerStatus.PENDING));
             return timerRepository.saveAll(timerList);
         }
@@ -112,9 +110,9 @@ public class TimerService {
             //Автоматический запуск таймера, если установлены необходимые настройки
             if ((timer.isAutostartBreak() && timer.getInterval() % 2 == 0) ||
                     (timer.isAutostartWork() && timer.getInterval() % 2 != 0)) {
-                timer = updateTimerStatus(timer.getId(), TimerStatus.RUNNING.name());
+                updateTimerStatus(timer.getId(), TimerStatus.RUNNING.name());
             } else {
-                timer = updateTimerStatus(timer.getId(), PAUSED.name());
+                updateTimerStatus(timer.getId(), PAUSED.name());
             }
         }
         return expiredTimers.get();

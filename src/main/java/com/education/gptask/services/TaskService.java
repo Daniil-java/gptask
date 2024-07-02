@@ -49,9 +49,6 @@ public class TaskService {
     }
 
     public Task createTask(Task task) {
-//        if (!CollectionUtils.isEmpty(task.getChildTasks())) {
-//            throw new ErrorResponseException(ErrorStatus.TASK_CREATION_ERROR);
-//        }
         return taskRepository.save(task);
     }
 

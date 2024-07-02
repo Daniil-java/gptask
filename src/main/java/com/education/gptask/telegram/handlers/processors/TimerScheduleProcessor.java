@@ -4,13 +4,10 @@ import com.education.gptask.entities.timer.Timer;
 import com.education.gptask.services.TimerService;
 import com.education.gptask.telegram.enteties.BotState;
 import com.education.gptask.telegram.handlers.timer.TimerHandler;
-import com.education.gptask.telegram.handlers.timer.controls.TimerPauseHandler;
-import com.education.gptask.telegram.handlers.timer.controls.TimerStartHandler;
 import com.education.gptask.telegram.utils.builders.BotApiMethodBuilder;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -27,7 +24,6 @@ import java.util.List;
 public class TimerScheduleProcessor {
     private final TimerService timerService;
 
-    @Scheduled(cron = "0 * * * * *")
     @Transactional
     public List<BotApiMethod> checkTimesTimeStatus() {
         List<Timer> timers = timerService.getExpiredTimersAndUpdate();
@@ -43,9 +39,9 @@ public class TimerScheduleProcessor {
                             );
             switch (timer.getStatus()) {
                 case PAUSED:
-                    editMessageText.setReplyMarkup(TimerPauseHandler.getInlineMessageButtons());
+                    editMessageText.setReplyMarkup(TimerHandler.getInlineMessagePauseButtons());
                 case RUNNING:
-                    editMessageText.setReplyMarkup(TimerStartHandler.getInlineMessageButtons());
+                    editMessageText.setReplyMarkup(TimerHandler.getInlineMessageStartButtons());
                 case PENDING:
                     editMessageText.setReplyMarkup(TimerHandler.getInlineMessageButtons());
             }
@@ -60,6 +56,8 @@ public class TimerScheduleProcessor {
         }
         return messages;
     }
+
+
 
     private InlineKeyboardMarkup getInlineMessageButtonDelete() {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
