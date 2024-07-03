@@ -5,8 +5,11 @@ import com.education.gptask.dtos.mappers.TaskMapper;
 import com.education.gptask.dtos.mappers.UserMapper;
 import com.education.gptask.entities.error.ErrorResponseException;
 import com.education.gptask.entities.error.ErrorStatus;
+import com.education.gptask.entities.task.Status;
 import com.education.gptask.entities.task.Task;
 import com.education.gptask.repositories.TaskRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,6 +24,7 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final TaskMapper taskMapper;
     private final UserMapper userMapper;
+    private final OpenAiApiFeignService openAiApiFeignService;
 
     public List<TaskDto> getTasksDtoByUserId(Long id) {
         return taskMapper.entityListToDtoList(getTasksByUserId(id));
@@ -68,5 +72,44 @@ public class TaskService {
 
     public void deleteTaskById(Long id) {
         taskRepository.deleteById(id);
+    }
+
+    @Transactional
+    public List<TaskDto> generateSubtasks(TaskDto taskDto) {
+        try {
+            List<Task> taskList =
+                    taskMapper.dtoListToEntityList(
+                            openAiApiFeignService.generateSubtasks(taskDto.getName(), taskDto.getComment())
+                    );
+
+            for (Task task: taskList) {
+                task.setStatus(Status.PLANNED);
+                task.setUser(userMapper.dtoToEntity(taskDto.getUser()));
+                task.setParent(new Task().setId(taskDto.getId()));
+            }
+            return taskMapper.entityListToDtoList(taskRepository.saveAll(taskList));
+        } catch (JsonProcessingException e) {
+            throw new ErrorResponseException(ErrorStatus.TASK_SUBTASK_GENERATION_ERROR);
+        }
+    }
+
+    @Transactional
+    public List<Task> generateSubtasksById(Long taskId) {
+        try {
+            Task task = getTaskById(taskId);
+            List<Task> taskList =
+                    taskMapper.dtoListToEntityList(
+                            openAiApiFeignService.generateSubtasks(task.getName(), task.getComment())
+                    );
+
+            for (Task taskObj: taskList) {
+                taskObj.setStatus(Status.PLANNED);
+                taskObj.setUser(task.getUser());
+                taskObj.setParent(task);
+            }
+            return taskRepository.saveAll(taskList);
+        } catch (JsonProcessingException e) {
+            throw new ErrorResponseException(ErrorStatus.TASK_SUBTASK_GENERATION_ERROR);
+        }
     }
 }
