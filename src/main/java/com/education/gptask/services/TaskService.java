@@ -22,9 +22,12 @@ public class TaskService {
     private final TaskMapper taskMapper;
     private final UserMapper userMapper;
 
-    public List<TaskDto> getTasksByUserId(Long id) {
-        return taskRepository.findTasksByUserIdAndParentIsNull(id)
-                .map(taskMapper::entityListToDtoList)
+    public List<TaskDto> getTasksDtoByUserId(Long id) {
+        return taskMapper.entityListToDtoList(getTasksByUserId(id));
+    }
+
+    public List<Task> getTasksByUserId(Long id) {
+        return taskRepository.findTasksByUserEntityIdAndParentIsNull(id)
                 .orElseThrow(() -> new ErrorResponseException(ErrorStatus.TASK_ERROR));
     }
 
@@ -38,14 +41,15 @@ public class TaskService {
                 );
     }
 
-    public TaskDto createTask(TaskDto taskDto) {
-        if (!CollectionUtils.isEmpty(taskDto.getChildTasks())) {
-            throw new ErrorResponseException(ErrorStatus.TASK_CREATION_ERROR);
-        }
+    public TaskDto createTaskByDto(TaskDto taskDto) {
         return taskMapper.entityToDto(
-                taskRepository.save(
+                createTask(
                         taskMapper.dtoToEntity(taskDto)
         ));
+    }
+
+    public Task createTask(Task task) {
+        return taskRepository.save(task);
     }
 
     public TaskDto updateTask(TaskDto taskDto) {

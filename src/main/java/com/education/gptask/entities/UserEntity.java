@@ -1,5 +1,6 @@
 package com.education.gptask.entities;
 
+import com.education.gptask.telegram.enteties.BotState;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,16 +14,21 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @Accessors(chain = true)
-public class User {
+public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
     private Long id;
-
-    @Column(name = "name")
-    private String name;
-
-    @Column(name = "created")
+    private Long telegramId;
+    private Long chatId;
+    @Enumerated(EnumType.STRING)
+    private BotState botState;
+    private String username;
+    private String firstname;
+    private String lastname;
+    private String languageCode;
+    private Long lastUpdatedTaskId;
+    private Long lastUpdatedTaskMessageId;
+    private Long lastUpdatedTimerSettingsMessageId;
     @CreationTimestamp
     private LocalDateTime created;
 }

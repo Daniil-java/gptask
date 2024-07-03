@@ -17,7 +17,7 @@ public class TaskController {
 
     @GetMapping
     public List<TaskDto> getAllTasksByUserId(@RequestParam Long userId) {
-        return taskService.getTasksByUserId(userId);
+        return taskService.getTasksDtoByUserId(userId);
     }
 
     @GetMapping("/{taskId}")
@@ -27,7 +27,7 @@ public class TaskController {
 
     @PostMapping
     public TaskDto createTask(@Validated @RequestBody TaskDto taskDto)  {
-        return taskService.createTask(taskDto);
+        return taskService.createTaskByDto(taskDto);
     }
 
     @PutMapping
