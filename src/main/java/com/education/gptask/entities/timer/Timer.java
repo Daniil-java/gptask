@@ -1,6 +1,6 @@
 package com.education.gptask.entities.timer;
 
-import com.education.gptask.entities.User;
+import com.education.gptask.entities.UserEntity;
 import com.education.gptask.entities.task.Task;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -25,13 +25,13 @@ public class Timer {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    private User user;
+    private UserEntity userEntity;
 
     @Enumerated(EnumType.STRING)
     private TimerStatus status;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE},
-            fetch = FetchType.LAZY)
+            fetch = FetchType.EAGER)
     @JoinTable(
             name = "timer_tasks",
             joinColumns = @JoinColumn(name = "timer_id", referencedColumnName = "id"),
@@ -50,6 +50,14 @@ public class Timer {
     private boolean isAutostartWork;
 
     private boolean isAutostartBreak;
+
+    private int interval;
+
+    private int telegramMessageId;
+
+    private LocalDateTime stopTime;
+
+    private int minuteToStop;
 
     @UpdateTimestamp
     private LocalDateTime updated;
