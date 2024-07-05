@@ -74,6 +74,10 @@ public class TaskService {
         taskRepository.deleteById(id);
     }
 
+    public void deleteAllById(Iterable<? extends Long> ids) {
+        taskRepository.deleteAllById(ids);
+    }
+
     @Transactional
     public List<TaskDto> generateSubtasks(TaskDto taskDto) {
         try {
@@ -84,7 +88,7 @@ public class TaskService {
 
             for (Task task: taskList) {
                 task.setStatus(Status.PLANNED);
-                task.setUser(userMapper.dtoToEntity(taskDto.getUser()));
+                task.setUserEntity(userMapper.dtoToEntity(taskDto.getUser()));
                 task.setParent(new Task().setId(taskDto.getId()));
             }
             return taskMapper.entityListToDtoList(taskRepository.saveAll(taskList));
@@ -104,7 +108,7 @@ public class TaskService {
 
             for (Task taskObj: taskList) {
                 taskObj.setStatus(Status.PLANNED);
-                taskObj.setUser(task.getUser());
+                taskObj.setUserEntity(task.getUserEntity());
                 taskObj.setParent(task);
             }
             return taskRepository.saveAll(taskList);
@@ -112,4 +116,27 @@ public class TaskService {
             throw new ErrorResponseException(ErrorStatus.TASK_SUBTASK_GENERATION_ERROR);
         }
     }
+
+    /*
+        Метод возвращает ограниченное количество задач, принадлежащих
+        одному пользователю, чьё значение id больше параметра taskId.
+        Метод необходим для корректного отображения задач в списке,
+        в виде клавиатуры, в Телеграм.
+    */
+    public List<Task> getTasksAfterIdLimited(long userId, long taskId, int limit) {
+        return taskRepository.findTasksAfterIdLimited(userId, taskId, limit)
+                .orElseThrow(() -> new ErrorResponseException(ErrorStatus.TASK_ERROR));
+    }
+
+    /*
+        Метод возвращает ограниченное количество задач, принадлежащих
+        одному пользователю, чьё значение id меньше параметра taskId.
+        Метод необходим для корректного отображения задач в списке,
+        в виде клавиатуры, в Телеграм.
+    */
+    public List<Task> getTasksBeforeIdLimited(long userId, long taskId, int limit) {
+        return taskRepository.findTasksBeforeIdLimited(userId, taskId, limit)
+                .orElseThrow(() -> new ErrorResponseException(ErrorStatus.TASK_ERROR));
+    }
+
 }

@@ -7,7 +7,7 @@ import com.education.gptask.entities.timer.Timer;
 import com.education.gptask.services.TaskService;
 import com.education.gptask.services.TimerService;
 import com.education.gptask.services.UserService;
-import com.education.gptask.telegram.enteties.BotState;
+import com.education.gptask.telegram.entities.BotState;
 import com.education.gptask.telegram.handlers.MessageHandler;
 import com.education.gptask.telegram.handlers.timer.TimerHandler;
 import com.education.gptask.telegram.utils.builders.BotApiMethodBuilder;

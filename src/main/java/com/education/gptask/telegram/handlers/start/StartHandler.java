@@ -1,7 +1,7 @@
 package com.education.gptask.telegram.handlers.start;
 
 import com.education.gptask.entities.UserEntity;
-import com.education.gptask.telegram.enteties.BotState;
+import com.education.gptask.telegram.entities.BotState;
 import com.education.gptask.telegram.handlers.MessageHandler;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;

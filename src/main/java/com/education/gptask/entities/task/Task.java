@@ -68,4 +68,10 @@ public class Task {
     @Column(name = "created")
     @CreationTimestamp
     private LocalDateTime created;
+
+    @PreRemove
+    private void removeTaskFrom() {
+        parent.getChildTasks().remove(this);
+        childTasks.clear();
+    }
 }

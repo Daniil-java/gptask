@@ -1,7 +1,7 @@
 package com.education.gptask.telegram.handlers.notification;
 
 import com.education.gptask.entities.UserEntity;
-import com.education.gptask.telegram.enteties.BotState;
+import com.education.gptask.telegram.entities.BotState;
 import com.education.gptask.telegram.handlers.MessageHandler;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
