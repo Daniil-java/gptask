@@ -9,6 +9,7 @@ import com.education.gptask.telegram.utils.builders.BotApiMethodBuilder;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -29,8 +30,8 @@ public class TimerScheduleProcessor {
     public void process() {
         log.info("Schedule timer checker is starting!");
         List<BotApiMethod> messages = checkTimersTimeStatus();
-        if (messages != null && !messages.isEmpty()) {
-            log.info("Expired timer list size: " + messages.size());
+        if (!CollectionUtils.isEmpty(messages)) {
+            log.info("Expired timer list size: {}", messages.size());
             for (BotApiMethod message: messages) {
                 try {
                     Thread.sleep(1000);

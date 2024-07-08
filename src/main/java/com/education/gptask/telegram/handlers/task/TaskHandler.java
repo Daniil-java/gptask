@@ -9,6 +9,8 @@ import com.education.gptask.telegram.entities.BotState;
 import com.education.gptask.telegram.handlers.MessageHandler;
 import com.education.gptask.telegram.utils.converters.MessageTypeConverter;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -33,13 +35,8 @@ public class TaskHandler implements MessageHandler {
         Данная константа является стандартным значением
         строк в списке задач.
     */
-    private static int LIST_PAGE_ROW_COUNT = 8;
+    private final static int LIST_PAGE_ROW_COUNT = 8;
 
-    /*
-        Данная константа является стандартным значением
-        параметра taskId метода MessageHandler.getList(...).
-    */
-    private static long DEFAULT_TASK_GETLIST_ID = 0;
     @Override
     public BotApiMethod handle(Message message, UserEntity userEntity) {
         Long chatId = message.getChatId();
@@ -61,8 +58,10 @@ public class TaskHandler implements MessageHandler {
             }
             DeleteMessage deleteMessage = new DeleteMessage(String.valueOf(chatId), messageId);
             telegramBot.sendMessage(deleteMessage);
-
-            List<Task> taskList = taskService.getTasksAfterIdLimited(userEntity.getId(), 0, LIST_PAGE_ROW_COUNT);
+            List<Task> taskList = taskService.getParentTasksByUserId(
+                            userEntity.getId(),
+                            PageRequest.of(0, LIST_PAGE_ROW_COUNT, Sort.by("id"))
+            );
             Message futureMessage = telegramBot
                     .sendReturnedMessage(getList(taskList, chatId, 0));
             userEntity.setLastUpdatedTaskMessageId(Long.valueOf(futureMessage.getMessageId()));
@@ -73,24 +72,18 @@ public class TaskHandler implements MessageHandler {
         if (botState.equals(BotState.TASK_MAIN_MENU)) {
             EditMessageText editMessageText;
             List<Task> taskList;
-            long id;
-            if (userAnswer.contains("/next") || userAnswer.contains("/prev")) {
-                if (userAnswer.contains("/next")) {
-                    id = Long.parseLong(userAnswer.substring("/next".length()));
-                    taskList = taskService.getTasksAfterIdLimited(userEntity.getId(), id, LIST_PAGE_ROW_COUNT);
-                } else {
-                    id = Long.parseLong(userAnswer.substring("/prev".length()));
-                    taskList = taskService.getTasksBeforeIdLimited(userEntity.getId(), id, LIST_PAGE_ROW_COUNT);
-                }
-
-            } else {
-                id = DEFAULT_TASK_GETLIST_ID;
-                taskList = taskService
-                        .getTasksAfterIdLimited(userEntity.getId(), id, LIST_PAGE_ROW_COUNT);
+            int page = 0;
+            if (userAnswer.startsWith("/next") || userAnswer.startsWith("/prev")) {
+                page = userAnswer.startsWith("/next")
+                        ? Integer.parseInt(userAnswer.substring("/next".length()))
+                        : Integer.parseInt(userAnswer.substring("/prev".length()));
             }
+            taskList = taskService.getParentTasksByUserId(
+                    userEntity.getId(),
+                    PageRequest.of(page, LIST_PAGE_ROW_COUNT, Sort.by("id")));
 
             editMessageText = MessageTypeConverter
-                    .convertSendToEdit(getList(taskList, chatId, id));
+                    .convertSendToEdit(getList(taskList, chatId, page));
             editMessageText.setMessageId(Math.toIntExact(userEntity.getLastUpdatedTaskMessageId()));
             userEntity.setBotState(BotState.TASK_LIST);
             userService.updateUserEntity(userEntity);
@@ -109,7 +102,7 @@ public class TaskHandler implements MessageHandler {
         данный параметр
     */
     public static SendMessage getList
-            (List<Task> taskList, long chatId, long taskId) {
+            (List<Task> taskList, long chatId, int page) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
 
@@ -118,14 +111,13 @@ public class TaskHandler implements MessageHandler {
             sendMessage.setReplyMarkup(getInlineMessageButtons());
         } else {
             sendMessage.setText("LIST:");
-            boolean isFirst = taskId == 0;
             sendMessage.setReplyMarkup(
-                    getInlineMessageListTaskButtons(taskList, LIST_PAGE_ROW_COUNT, isFirst));
+                    getInlineMessageListTaskButtons(taskList, LIST_PAGE_ROW_COUNT, page));
         }
         return sendMessage;
     }
     public static InlineKeyboardMarkup getInlineMessageListTaskButtons(
-            List<Task> taskList, int rowCount, boolean isFirst
+            List<Task> taskList, int rowCount, int page
     ) {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
@@ -138,14 +130,14 @@ public class TaskHandler implements MessageHandler {
         }
 
         List<InlineKeyboardButton> row = new ArrayList<>();
-        if (!isFirst) {
+        if (page != 0) {
             InlineKeyboardButton prevButton = new InlineKeyboardButton("<<<");
-            prevButton.setCallbackData("/prev" + taskList.get(0).getId());
+            prevButton.setCallbackData("/prev" + (page - 1));
             row.add(prevButton);
         }
         if (taskList.size() == rowCount) {
             InlineKeyboardButton nextButton = new InlineKeyboardButton(">>>");
-            nextButton.setCallbackData("/next" + taskList.get(taskList.size() - 1).getId());
+            nextButton.setCallbackData("/next" + (page + 1));
             row.add(nextButton);
         }
 

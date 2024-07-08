@@ -12,6 +12,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -117,26 +118,8 @@ public class TaskService {
         }
     }
 
-    /*
-        Метод возвращает ограниченное количество задач, принадлежащих
-        одному пользователю, чьё значение id больше параметра taskId.
-        Метод необходим для корректного отображения задач в списке,
-        в виде клавиатуры, в Телеграм.
-    */
-    public List<Task> getTasksAfterIdLimited(long userId, long taskId, int limit) {
-        return taskRepository.findTasksAfterIdLimited(userId, taskId, limit)
-                .orElseThrow(() -> new ErrorResponseException(ErrorStatus.TASK_ERROR));
-    }
-
-    /*
-        Метод возвращает ограниченное количество задач, принадлежащих
-        одному пользователю, чьё значение id меньше параметра taskId.
-        Метод необходим для корректного отображения задач в списке,
-        в виде клавиатуры, в Телеграм.
-    */
-    public List<Task> getTasksBeforeIdLimited(long userId, long taskId, int limit) {
-        return taskRepository.findTasksBeforeIdLimited(userId, taskId, limit)
-                .orElseThrow(() -> new ErrorResponseException(ErrorStatus.TASK_ERROR));
+    public List<Task> getParentTasksByUserId(long userId, Pageable paging) {
+        return taskRepository.findAllByUserEntityIdAndParentIsNull(userId, paging);
     }
 
 }

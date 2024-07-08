@@ -44,7 +44,7 @@ public class Task {
     @JoinColumn(name = "parent_id")
     private Task parent;
 
-    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<Task> childTasks;
 
     @Column(name = "name")
@@ -71,7 +71,9 @@ public class Task {
 
     @PreRemove
     private void removeTaskFrom() {
-        parent.getChildTasks().remove(this);
+        if (parent != null) {
+            parent.getChildTasks().remove(this);
+        }
         childTasks.clear();
     }
 }

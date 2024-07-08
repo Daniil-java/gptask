@@ -48,7 +48,7 @@ public class TaskListHandler implements MessageHandler {
                 "Что-то пошло не так ¯\\_(ツ)_/¯");
 
         if (botState.equals(BotState.TASK_LIST)) {
-            if (!userAnswer.isEmpty() && userAnswer.contains("/id")) {
+            if (!userAnswer.isEmpty() && userAnswer.startsWith("/id")) {
                 long taskId;
                 try {
                     taskId = Long.parseLong(userAnswer.substring("/id".length()));
@@ -61,8 +61,8 @@ public class TaskListHandler implements MessageHandler {
                 editMessageText.setReplyMarkup(getInlineMessageButtons(taskId));
                 return editMessageText;
             }
-            if (!userAnswer.isEmpty() && (userAnswer.contains("/next") || userAnswer.contains("/prev") ||
-                    userAnswer.contains("/subnext") || userAnswer.contains("/subnext"))) {
+            if (!userAnswer.isEmpty() && (userAnswer.startsWith("/next") || userAnswer.startsWith("/prev") ||
+                    userAnswer.startsWith("/subnext") || userAnswer.startsWith("/subnext"))) {
                 userEntity.setBotState(BotState.TASK_MAIN_MENU);
                 return taskHandler.handle(message, userEntity);
             }
