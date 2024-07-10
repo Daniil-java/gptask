@@ -12,6 +12,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -74,6 +75,10 @@ public class TaskService {
         taskRepository.deleteById(id);
     }
 
+    public void deleteAllById(Iterable<? extends Long> ids) {
+        taskRepository.deleteAllById(ids);
+    }
+
     @Transactional
     public List<TaskDto> generateSubtasks(TaskDto taskDto) {
         try {
@@ -84,7 +89,7 @@ public class TaskService {
 
             for (Task task: taskList) {
                 task.setStatus(Status.PLANNED);
-                task.setUser(userMapper.dtoToEntity(taskDto.getUser()));
+                task.setUserEntity(userMapper.dtoToEntity(taskDto.getUser()));
                 task.setParent(new Task().setId(taskDto.getId()));
             }
             return taskMapper.entityListToDtoList(taskRepository.saveAll(taskList));
@@ -104,7 +109,7 @@ public class TaskService {
 
             for (Task taskObj: taskList) {
                 taskObj.setStatus(Status.PLANNED);
-                taskObj.setUser(task.getUser());
+                taskObj.setUserEntity(task.getUserEntity());
                 taskObj.setParent(task);
             }
             return taskRepository.saveAll(taskList);
@@ -112,4 +117,9 @@ public class TaskService {
             throw new ErrorResponseException(ErrorStatus.TASK_SUBTASK_GENERATION_ERROR);
         }
     }
+
+    public List<Task> getParentTasksByUserId(long userId, Pageable paging) {
+        return taskRepository.findAllByUserEntityIdAndParentIsNull(userId, paging);
+    }
+
 }

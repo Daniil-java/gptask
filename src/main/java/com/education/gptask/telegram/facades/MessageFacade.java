@@ -2,7 +2,7 @@ package com.education.gptask.telegram.facades;
 
 import com.education.gptask.entities.UserEntity;
 import com.education.gptask.services.UserService;
-import com.education.gptask.telegram.enteties.BotState;
+import com.education.gptask.telegram.entities.BotState;
 import com.education.gptask.telegram.handlers.InputMessageHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

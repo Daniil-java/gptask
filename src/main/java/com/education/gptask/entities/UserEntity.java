@@ -1,6 +1,6 @@
 package com.education.gptask.entities;
 
-import com.education.gptask.telegram.enteties.BotState;
+import com.education.gptask.telegram.entities.BotState;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;

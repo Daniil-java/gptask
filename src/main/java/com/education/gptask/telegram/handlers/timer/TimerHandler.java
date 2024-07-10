@@ -6,7 +6,7 @@ import com.education.gptask.entities.timer.Timer;
 import com.education.gptask.entities.timer.TimerStatus;
 import com.education.gptask.services.TimerService;
 import com.education.gptask.telegram.TelegramBot;
-import com.education.gptask.telegram.enteties.BotState;
+import com.education.gptask.telegram.entities.BotState;
 import com.education.gptask.telegram.handlers.MessageHandler;
 import com.education.gptask.telegram.utils.builders.BotApiMethodBuilder;
 import lombok.AllArgsConstructor;

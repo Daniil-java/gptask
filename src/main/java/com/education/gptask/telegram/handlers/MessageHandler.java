@@ -1,7 +1,7 @@
 package com.education.gptask.telegram.handlers;
 
 import com.education.gptask.entities.UserEntity;
-import com.education.gptask.telegram.enteties.BotState;
+import com.education.gptask.telegram.entities.BotState;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.objects.Message;

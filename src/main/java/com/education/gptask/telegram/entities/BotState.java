@@ -1,4 +1,4 @@
-package com.education.gptask.telegram.enteties;
+package com.education.gptask.telegram.entities;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -7,9 +7,9 @@ import com.education.gptask.entities.task.Task;
 import com.education.gptask.services.TaskService;
 import com.education.gptask.services.UserService;
 import com.education.gptask.telegram.TelegramBot;
-import com.education.gptask.telegram.enteties.BotState;
+import com.education.gptask.telegram.entities.BotState;
 import com.education.gptask.telegram.handlers.MessageHandler;
-import com.education.gptask.telegram.handlers.task.TaskMainMenuHandler;
+import com.education.gptask.telegram.handlers.task.TaskHandler;
 import com.education.gptask.telegram.utils.builders.BotApiMethodBuilder;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -31,7 +31,7 @@ public class TaskCreationHandler implements MessageHandler {
     private final UserService userService;
     private final TaskService taskService;
     private final TelegramBot telegramBot;
-    private final TaskMainMenuHandler mainMenuHandler;
+    private final TaskHandler taskHandler;
 
     @Override
     public BotApiMethod handle(Message message, UserEntity userEntity) {
@@ -86,7 +86,8 @@ public class TaskCreationHandler implements MessageHandler {
 
             DeleteMessage deleteMessage = new DeleteMessage(chatId.toString(), messageId);
             telegramBot.sendMessage(deleteMessage);
-            return mainMenuHandler.handle(message, userEntity);
+            userEntity.setBotState(BotState.TASK_MAIN_MENU);
+            return taskHandler.handle(message, userEntity);
         }
 
         return replyMessage;

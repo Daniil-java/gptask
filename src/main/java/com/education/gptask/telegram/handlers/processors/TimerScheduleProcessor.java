@@ -2,12 +2,14 @@ package com.education.gptask.telegram.handlers.processors;
 
 import com.education.gptask.entities.timer.Timer;
 import com.education.gptask.services.TimerService;
-import com.education.gptask.telegram.enteties.BotState;
+import com.education.gptask.telegram.TelegramBot;
+import com.education.gptask.telegram.entities.BotState;
 import com.education.gptask.telegram.handlers.timer.TimerHandler;
 import com.education.gptask.telegram.utils.builders.BotApiMethodBuilder;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -23,9 +25,28 @@ import java.util.List;
 @Slf4j
 public class TimerScheduleProcessor {
     private final TimerService timerService;
+    private final TelegramBot telegramBot;
+
+    public void process() {
+        log.info("Schedule timer checker is starting!");
+        List<BotApiMethod> messages = checkTimersTimeStatus();
+        if (!CollectionUtils.isEmpty(messages)) {
+            log.info("Expired timer list size: {}", messages.size());
+            for (BotApiMethod message: messages) {
+                try {
+                    Thread.sleep(1000);
+                    telegramBot.sendMessage(message);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        } else {
+            log.info("Expired timer list is empty");
+        }
+    }
 
     @Transactional
-    public List<BotApiMethod> checkTimesTimeStatus() {
+    private List<BotApiMethod> checkTimersTimeStatus() {
         List<Timer> timers = timerService.getExpiredTimersAndUpdate();
         if (timers == null || timers.isEmpty()) return null;
         List<BotApiMethod> messages = new ArrayList<>();

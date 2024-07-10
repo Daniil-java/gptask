@@ -44,7 +44,7 @@ public class Task {
     @JoinColumn(name = "parent_id")
     private Task parent;
 
-    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<Task> childTasks;
 
     @Column(name = "name")
@@ -68,4 +68,12 @@ public class Task {
     @Column(name = "created")
     @CreationTimestamp
     private LocalDateTime created;
+
+    @PreRemove
+    private void removeTaskFrom() {
+        if (parent != null) {
+            parent.getChildTasks().remove(this);
+        }
+        childTasks.clear();
+    }
 }

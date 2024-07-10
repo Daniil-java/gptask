@@ -5,7 +5,7 @@ import com.education.gptask.entities.timer.Timer;
 import com.education.gptask.services.TimerService;
 import com.education.gptask.services.UserService;
 import com.education.gptask.telegram.TelegramBot;
-import com.education.gptask.telegram.enteties.BotState;
+import com.education.gptask.telegram.entities.BotState;
 import com.education.gptask.telegram.handlers.MessageHandler;
 import com.education.gptask.telegram.utils.builders.BotApiMethodBuilder;
 import com.education.gptask.telegram.utils.keyboards.InlineKeyboardBuilder;
@@ -55,9 +55,8 @@ public class TimerSettingsHandler implements MessageHandler {
                 );
         if (botState.equals(BotState.TIMER_SETTINGS)) {
             if (userAnswer.equals("CLOSE")) {
-                DeleteMessage deleteMessage = new DeleteMessage(String.valueOf(chatId),
+                return new DeleteMessage(String.valueOf(chatId),
                         Math.toIntExact(userEntity.getLastUpdatedTimerSettingsMessageId()));
-                return deleteMessage;
             }
             SendMessage sendMessage = new SendMessage(String.valueOf(chatId), SETTINGS_MSG);
             sendMessage.setReplyMarkup(getInlineMessageButtons());
@@ -91,28 +90,36 @@ public class TimerSettingsHandler implements MessageHandler {
         }
 
         if (botState.equals(BotState.TIMER_SETTINGS_LBREAK)) {
-            if (!userAnswer.isEmpty() && userAnswer.matches("[0-9]+")) {
-                timer.setLongBreakDuration(Integer.parseInt(userAnswer));
+            if (!userAnswer.isEmpty()) {
+                int duration = tryToParseIntPositive(userAnswer);
+                if (duration == -1) return replyMessage;
+                timer.setLongBreakDuration(duration);
             } else return editMessageText;
         }
 
         if (botState.equals(BotState.TIMER_SETTINGS_LBREAK_INTERVAL)) {
-            if (!userAnswer.isEmpty() && userAnswer.matches("[0-9]+")) {
-                timer.setLongBreakInterval(Integer.parseInt(userAnswer));
+            if (!userAnswer.isEmpty()) {
+                int interval = tryToParseIntPositive(userAnswer);
+                if (interval == -1) return replyMessage;
+                timer.setLongBreakInterval(interval);
             } else {
                 return editMessageText;
             }
         }
 
         if (botState.equals(BotState.TIMER_SETTINGS_WORK)) {
-            if (!userAnswer.isEmpty() && userAnswer.matches("[0-9]+")) {
-                timer.setWorkDuration(Integer.parseInt(userAnswer));
+            if (!userAnswer.isEmpty()) {
+                int duration = tryToParseIntPositive(userAnswer);
+                if (duration == -1) return replyMessage;
+                timer.setWorkDuration(duration);
             } else return editMessageText;
         }
 
         if (botState.equals(BotState.TIMER_SETTINGS_SBREAK)) {
-            if (!userAnswer.isEmpty() && userAnswer.matches("[0-9]+")) {
-                timer.setShortBreakDuration(Integer.parseInt(userAnswer));
+            if (!userAnswer.isEmpty()) {
+                int duration = tryToParseIntPositive(userAnswer);
+                if (duration == -1) return replyMessage;
+                timer.setShortBreakDuration(duration);
             } else return editMessageText;
         }
         if (!botState.equals(BotState.TIMER_SETTINGS)) {
@@ -127,6 +134,17 @@ public class TimerSettingsHandler implements MessageHandler {
         }
 
         return replyMessage;
+    }
+
+    private int tryToParseIntPositive(String str) {
+        int integer;
+        try {
+            integer = Integer.parseInt(str);
+            if (integer < 0) return -1;
+            return integer;
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 
     private InlineKeyboardMarkup getInlineMessageButtons() {
