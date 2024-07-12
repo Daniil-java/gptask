@@ -63,7 +63,7 @@ public class TaskHandler implements MessageHandler {
                             PageRequest.of(0, LIST_PAGE_ROW_COUNT, Sort.by("id"))
             );
             Message futureMessage = telegramBot
-                    .sendReturnedMessage(getList(taskList, chatId, 0));
+                    .sendReturnedMessage(getList(taskList, chatId, 0, false));
             userEntity.setLastUpdatedTaskMessageId(Long.valueOf(futureMessage.getMessageId()));
             userService.updateUserEntity(userEntity);
             return null;
@@ -83,11 +83,17 @@ public class TaskHandler implements MessageHandler {
                     PageRequest.of(page, LIST_PAGE_ROW_COUNT, Sort.by("id")));
 
             editMessageText = MessageTypeConverter
-                    .convertSendToEdit(getList(taskList, chatId, page));
+                    .convertSendToEdit(getList(taskList, chatId, page, false));
             editMessageText.setMessageId(Math.toIntExact(userEntity.getLastUpdatedTaskMessageId()));
             userEntity.setBotState(BotState.TASK_LIST);
             userService.updateUserEntity(userEntity);
             return editMessageText;
+        }
+
+        if (botState.equals(BotState.TASK_MAIN_MENU_CLOSE)) {
+            if (userEntity.getLastUpdatedTaskMessageId() != null) {
+                return new DeleteMessage(String.valueOf(chatId), Math.toIntExact(userEntity.getLastUpdatedTaskMessageId()));
+            }
         }
 
         return replyMessage;
@@ -96,13 +102,9 @@ public class TaskHandler implements MessageHandler {
     /*
         Метод getList(...) отвечает за предоставление информации
         о задачах, ввиде клавиатуры, в Телеграм.
-
-        Парамет taskId отвечает за предоставление следующей страницы
-        списка, начинающейся со значения идентификатора выше, чем
-        данный параметр
     */
     public static SendMessage getList
-            (List<Task> taskList, long chatId, int page) {
+            (List<Task> taskList, long chatId, int page, boolean isSub) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
 
@@ -112,12 +114,12 @@ public class TaskHandler implements MessageHandler {
         } else {
             sendMessage.setText("LIST:");
             sendMessage.setReplyMarkup(
-                    getInlineMessageListTaskButtons(taskList, LIST_PAGE_ROW_COUNT, page));
+                    getInlineMessageListTaskButtons(taskList, LIST_PAGE_ROW_COUNT, page, isSub));
         }
         return sendMessage;
     }
     public static InlineKeyboardMarkup getInlineMessageListTaskButtons(
-            List<Task> taskList, int rowCount, int page
+            List<Task> taskList, int rowCount, int page, boolean isSub
     ) {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
@@ -130,22 +132,33 @@ public class TaskHandler implements MessageHandler {
         }
 
         List<InlineKeyboardButton> row = new ArrayList<>();
+        String suffix = isSub ? "sub" + taskList.get(0).getParent().getId() + "#" : "";
         if (page != 0) {
-            InlineKeyboardButton prevButton = new InlineKeyboardButton("<<<");
-            prevButton.setCallbackData("/prev" + (page - 1));
+            InlineKeyboardButton prevButton = new InlineKeyboardButton("⬅️");
+            prevButton.setCallbackData("/prev" + suffix + (page - 1));
             row.add(prevButton);
         }
         if (taskList.size() == rowCount) {
-            InlineKeyboardButton nextButton = new InlineKeyboardButton(">>>");
-            nextButton.setCallbackData("/next" + (page + 1));
+            InlineKeyboardButton nextButton = new InlineKeyboardButton("➡️");
+            nextButton.setCallbackData("/next" + suffix + (page + 1));
             row.add(nextButton);
         }
 
         rowList.add(row);
 
-        InlineKeyboardButton createButton = new InlineKeyboardButton("Создать");
-        createButton.setCallbackData(BotState.TASK_CREATE.getCommand());
-        rowList.add(Arrays.asList(createButton));
+        if (!isSub) {
+            InlineKeyboardButton createButton = new InlineKeyboardButton("Создать");
+            createButton.setCallbackData(BotState.TASK_CREATE.getCommand());
+            rowList.add(Arrays.asList(createButton));
+        } else {
+            InlineKeyboardButton backButton = new InlineKeyboardButton("Назад");
+            backButton.setCallbackData("/id" + taskList.get(0).getParent().getId());
+            rowList.add(Arrays.asList(backButton));
+        }
+
+        InlineKeyboardButton closeButton = new InlineKeyboardButton("Закрыть");
+        closeButton.setCallbackData(BotState.TASK_MAIN_MENU_CLOSE.getCommand());
+        rowList.add(Arrays.asList(closeButton));
 
         inlineKeyboardMarkup.setKeyboard(rowList);
         return inlineKeyboardMarkup;
@@ -170,6 +183,6 @@ public class TaskHandler implements MessageHandler {
 
     @Override
     public List<BotState> getHandlerListName() {
-        return Arrays.asList(BotState.TASK, BotState.TASK_MAIN_MENU);
+        return Arrays.asList(BotState.TASK, BotState.TASK_MAIN_MENU, BotState.TASK_MAIN_MENU_CLOSE);
     }
 }

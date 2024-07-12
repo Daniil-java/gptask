@@ -69,28 +69,53 @@ public class TaskCreationHandler implements MessageHandler {
                     .makeEditMessageText(chatId, messageId, "Give a name for task");
         }
 
-
         if (botState.equals(BotState.TASK_CREATE_NAME)) {
             Task task = taskService.getTaskById(userEntity.getLastUpdatedTaskId());
-            String name = userAnswer, comment = null;
-            if (!userAnswer.isEmpty() && userAnswer.indexOf("#") != -1) {
-                name = userAnswer.substring(0, userAnswer.indexOf("#"));
-                comment = userAnswer.substring(userAnswer.indexOf("#") + 1, userAnswer.length());
-            }
-            task.setName(name)
-                    .setComment(comment);
+            String name = userAnswer;
+            task.setName(name);
             taskService.createTask(task);
-            userEntity.setBotState(BotState.TASK_LIST);
-            userEntity.setLastUpdatedTaskId(null);
+            userEntity.setBotState(BotState.TASK_CREATE_COMMENT);
             userService.updateUserEntity(userEntity);
 
             DeleteMessage deleteMessage = new DeleteMessage(chatId.toString(), messageId);
             telegramBot.sendMessage(deleteMessage);
+
+            EditMessageText editMessageText = BotApiMethodBuilder
+                    .makeEditMessageText(chatId, messageId, "Give a comment for task");
+            editMessageText.setReplyMarkup(getInlineMessageSkipButton());
+            return editMessageText;
+        }
+
+        if (botState.equals(BotState.TASK_CREATE_COMMENT)) {
+            if (!userAnswer.startsWith("/skip")) {
+                DeleteMessage deleteMessage = new DeleteMessage(chatId.toString(), messageId);
+                telegramBot.sendMessage(deleteMessage);
+
+                Task task = taskService.getTaskById(userEntity.getLastUpdatedTaskId());
+                String comment = userAnswer;
+                task.setComment(comment);
+                taskService.createTask(task);
+            }
+
+            userEntity.setBotState(BotState.TASK_LIST)
+                    .setLastUpdatedTaskMessageId(null);
+            userService.updateUserEntity(userEntity);
             userEntity.setBotState(BotState.TASK_MAIN_MENU);
             return taskHandler.handle(message, userEntity);
         }
 
         return replyMessage;
+    }
+
+    public static InlineKeyboardMarkup getInlineMessageSkipButton() {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
+
+        InlineKeyboardButton skipButton = new InlineKeyboardButton("Пропустить");
+        skipButton.setCallbackData("/skip");
+        rowList.add(Arrays.asList(skipButton));
+        inlineKeyboardMarkup.setKeyboard(rowList);
+        return inlineKeyboardMarkup;
     }
 
     public static InlineKeyboardMarkup getInlineMessageButtonsPriority() {

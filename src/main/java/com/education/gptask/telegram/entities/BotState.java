@@ -30,7 +30,8 @@ public enum BotState {
     TASK_CREATE_STATUS("/task_create_status"),
     TASK_CREATE_NAME("/task_create_name"),
     TASK_LIST("/task_list"),
-    TASK_MAIN_MENU("/task_main_menu"),
+    TASK_MAIN_MENU("/task_main_menu"), TASK_MAIN_MENU_CLOSE("/task_main_menu_close"),
+    TASK_CREATE_COMMENT("/task_create_name"),
     PROCESSING(""),
     NOTIFICATION_TIMER_ALERT("/notification_timer_alert");
 
