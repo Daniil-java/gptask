@@ -19,6 +19,5 @@ public class TaskDto {
     private Status status;
     private String comment;
     private UserDto user;
-    private TaskDto parent;
     private List<TaskDto> childTasks;
 }
