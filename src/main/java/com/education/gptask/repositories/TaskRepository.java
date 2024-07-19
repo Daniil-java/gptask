@@ -2,7 +2,10 @@ package com.education.gptask.repositories;
 
 import com.education.gptask.entities.task.Task;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -13,4 +16,10 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     Optional<List<Task>> findTasksByUserEntityIdAndParentIsNull(Long id);
 
     List<Task> findAllByUserEntityIdAndParentIsNull(long userId, Pageable pageable);
+
+    List<Task> findAllByParentId(long taskId, Pageable pageable);
+
+    @Query("SELECT t FROM Task t JOIN t.timers timer WHERE timer.id = :timerId")
+    @EntityGraph(attributePaths = {"childTasks"})
+    List<Task> findAllByTimerId(@Param("timerId") Long timerId);
 }

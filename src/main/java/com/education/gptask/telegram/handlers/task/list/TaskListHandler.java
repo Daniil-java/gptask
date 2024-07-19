@@ -13,8 +13,11 @@ import com.education.gptask.telegram.handlers.MessageHandler;
 import com.education.gptask.telegram.handlers.task.TaskHandler;
 import com.education.gptask.telegram.handlers.task.creation.TaskCreationHandler;
 import com.education.gptask.telegram.utils.builders.BotApiMethodBuilder;
+import com.education.gptask.telegram.utils.converters.MessageTypeConverter;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -56,16 +59,15 @@ public class TaskListHandler implements MessageHandler {
                     return replyMessage;
                 }
                 Task task = taskService.getTaskById(taskId);
-                EditMessageText editMessageText = BotApiMethodBuilder
-                        .makeEditMessageText(chatId, Math.toIntExact(userEntity.getLastUpdatedTaskMessageId()), task.toString());
+                EditMessageText editMessageText = BotApiMethodBuilder.makeEditMessageText(
+                        chatId,
+                        Math.toIntExact(userEntity.getLastUpdatedTaskMessageId()),
+                        getTaskInfo(task)
+                );
                 editMessageText.setReplyMarkup(getInlineMessageButtons(taskId));
                 return editMessageText;
             }
-            if (!userAnswer.isEmpty() && (userAnswer.startsWith("/next") || userAnswer.startsWith("/prev") ||
-                    userAnswer.startsWith("/subnext") || userAnswer.startsWith("/subnext"))) {
-                userEntity.setBotState(BotState.TASK_MAIN_MENU);
-                return taskHandler.handle(message, userEntity);
-            }
+
 
             if (!userAnswer.isEmpty() && userAnswer.startsWith("/delete")) {
                 long taskId = Long.parseLong(userAnswer.substring("/delete".length()));
@@ -166,8 +168,9 @@ public class TaskListHandler implements MessageHandler {
                 message.setText("/id" + taskId);
                 handle(message, userEntity);
             } else {
-                taskId = Long.parseLong(userAnswer
-                        .substring("/reject".length(), userAnswer.indexOf("#")));
+                taskId = Long.parseLong(
+                        userAnswer.substring("/reject".length(), userAnswer.indexOf("#"))
+                );
                 String[] subIds = userAnswer
                         .substring(userAnswer.indexOf("#") + 1).split("#");
                 List<Long> substackIds = new ArrayList<>();
@@ -179,7 +182,54 @@ public class TaskListHandler implements MessageHandler {
             message.setText("/id" + taskId);
             return handle(message, userEntity);
         }
+        if (!userAnswer.isEmpty() && userAnswer.startsWith("/getsubs")) {
+            long taskId = Long.parseLong(userAnswer.substring("/getsubs".length()));
+            List<Task> taskList = taskService.getChildTasksByTaskId(taskId,
+                    PageRequest.of(0, 8, Sort.by("id")));
+            EditMessageText editMessageText = MessageTypeConverter
+                    .convertSendToEdit(TaskHandler.getList(taskList, chatId, 0, true));
+            editMessageText.setMessageId(Math.toIntExact(userEntity.getLastUpdatedTaskMessageId()));
+            return editMessageText;
+        }
+        if (!userAnswer.isEmpty() && (userAnswer.startsWith("/nextsub") || userAnswer.startsWith("/prevsub"))) {
+            String command = userAnswer.startsWith("/nextsub")
+                    ? "/nextsub"
+                    : "/prevsub";
+            long id = Long.parseLong(userAnswer.substring(command.length(), userAnswer.indexOf("#")));
+            int page = Integer.parseInt(userAnswer.substring(userAnswer.indexOf("#") + 1));
+            List<Task> taskList = taskService.getChildTasksByTaskId(
+                    id,
+                    PageRequest.of(page, 8, Sort.by("id")));
+
+            EditMessageText editMessageText = MessageTypeConverter
+                    .convertSendToEdit(TaskHandler.getList(taskList, chatId, page, true));
+            editMessageText.setMessageId(Math.toIntExact(userEntity.getLastUpdatedTaskMessageId()));
+            return editMessageText;
+        }
+        if (!userAnswer.isEmpty() && (userAnswer.startsWith("/next") || userAnswer.startsWith("/prev") ||
+                userAnswer.startsWith("/subnext") || userAnswer.startsWith("/subnext"))) {
+            userEntity.setBotState(BotState.TASK_MAIN_MENU);
+            return taskHandler.handle(message, userEntity);
+        }
         return replyMessage;
+    }
+
+    private String getTaskInfo(Task task) {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder
+                .append(String.format("[%s] %s\n", task.getId(), task.getName()))
+                .append(task.getComment())
+                .append("\n\n");
+
+        for (Task t: task.getChildTasks()) {
+            stringBuilder
+                    .append(String.format("[%s] %s\n", t.getId(), t.getName()))
+                    .append(t.getComment())
+                    .append("\n");
+
+        }
+
+        return stringBuilder.toString();
     }
 
     private String getTaskListInfo(List<Task> list) {

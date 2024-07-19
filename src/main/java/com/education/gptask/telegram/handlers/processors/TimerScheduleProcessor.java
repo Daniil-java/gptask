@@ -58,14 +58,7 @@ public class TimerScheduleProcessor {
                             timer.getTelegramMessageId(),
                             timer.getStatus().name()
                             );
-            switch (timer.getStatus()) {
-                case PAUSED:
-                    editMessageText.setReplyMarkup(TimerHandler.getInlineMessagePauseButtons());
-                case RUNNING:
-                    editMessageText.setReplyMarkup(TimerHandler.getInlineMessageStartButtons());
-                case PENDING:
-                    editMessageText.setReplyMarkup(TimerHandler.getInlineMessageButtons());
-            }
+            editMessageText.setReplyMarkup(TimerHandler.getInlineMessageTimerStatusButtons(timer.getStatus()));
             messages.add(editMessageText);
 
             SendMessage sendMessage = new SendMessage(

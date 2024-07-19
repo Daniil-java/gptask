@@ -34,10 +34,14 @@ public class TimerTasksListHandler implements MessageHandler {
         String userAnswer = message.getText();
         BotState botState = userEntity.getBotState();
         Timer timer = timerService.getTimersByUserId(userEntity.getId()).get(0);
+        List<Task> taskList = null;
+        if (!timer.getTasks().isEmpty()) {
+            taskList = taskService.getTasksByTimerId(timer.getId());
+        }
         EditMessageText editMessageText = BotApiMethodBuilder.makeEditMessageText(
                 message.getChatId(),
                 timer.getTelegramMessageId(),
-                TimerHandler.getTimerInfo(timer, botState.toString())
+                TimerHandler.getTimerInfo(timer, botState.toString(), taskList)
         );
         if (botState.equals(BotState.TIMER_TASKS_LIST)) {
             editMessageText.setReplyMarkup(getInlineMessageButtons());

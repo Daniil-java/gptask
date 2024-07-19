@@ -46,7 +46,7 @@ public class TimerService {
     public List<Timer> getTimersByUserId(Long userId, int messageId) {
         Optional<List<Timer>> timers = timerRepository.findTimersByUserEntityId(userId);
         if (timers.isPresent() && !timers.get().isEmpty()) {
-            timers.get().get(0).setTelegramMessageId(messageId);
+            if (messageId != 0) timers.get().get(0).setTelegramMessageId(messageId);
             return timerRepository.saveAll(timers.get());
         } else {
             UserEntity user = userService.getUserByEntityId(userId);

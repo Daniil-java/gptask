@@ -3,7 +3,9 @@ package com.education.gptask.telegram.handlers.timer;
 import com.education.gptask.entities.UserEntity;
 import com.education.gptask.entities.task.Task;
 import com.education.gptask.entities.timer.Timer;
+import com.education.gptask.entities.timer.TimerIntervalState;
 import com.education.gptask.entities.timer.TimerStatus;
+import com.education.gptask.services.TaskService;
 import com.education.gptask.services.TimerService;
 import com.education.gptask.telegram.TelegramBot;
 import com.education.gptask.telegram.entities.BotState;
@@ -19,6 +21,7 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -27,6 +30,7 @@ import java.util.List;
 @AllArgsConstructor
 public class TimerHandler implements MessageHandler {
     private final TimerService timerService;
+    private final TaskService taskService;
     private final TelegramBot telegramBot;
     @Override
     public BotApiMethod handle(Message message, UserEntity userEntity) {
@@ -37,10 +41,14 @@ public class TimerHandler implements MessageHandler {
                 "Что-то пошло не так ¯\\_(ツ)_/¯");
 
         Timer timer = timerService.getOrCreateTimerByUserId(userEntity.getId()).get(0);
+        List<Task> taskList = null;
+        if (!timer.getTasks().isEmpty()) {
+            taskList = taskService.getTasksByTimerId(timer.getId());
+        }
 
         if (botState.equals(BotState.TIMER)) {
-            replyMessage.setReplyMarkup(getInlineMessageButtons());
-            replyMessage.setText(getTimerInfo(timer));
+            replyMessage.setReplyMarkup(getInlineMessageTimerStatusButtons(timer.getStatus()));
+            replyMessage.setText(getTimerInfo(timer, taskList));
             if (timer.getTelegramMessageId() != 0) {
                 DeleteMessage deleteMessage =
                         new DeleteMessage(String.valueOf(chatId), timer.getTelegramMessageId());
@@ -53,12 +61,8 @@ public class TimerHandler implements MessageHandler {
 
         if (botState.equals(BotState.TIMER_STATUS)) {
             EditMessageText editMessageText = BotApiMethodBuilder
-                    .makeEditMessageText(chatId, timer.getTelegramMessageId(), getTimerInfo(timer));
-            switch (timer.getStatus()) {
-                case RUNNING: editMessageText.setReplyMarkup(TimerHandler.getInlineMessageStartButtons());
-                case PAUSED: editMessageText.setReplyMarkup(getInlineMessagePauseButtons());
-                case PENDING: editMessageText.setReplyMarkup(getInlineMessageButtons());
-            }
+                    .makeEditMessageText(chatId, timer.getTelegramMessageId(), getTimerInfo(timer, taskList));
+            editMessageText.setReplyMarkup(getInlineMessageTimerStatusButtons(timer.getStatus()));
             return editMessageText;
         }
 
@@ -66,8 +70,8 @@ public class TimerHandler implements MessageHandler {
             timer = timerService.updateTimerStatus(timer.getId(), TimerStatus.PENDING.name());
             timerService.resetIntervalById(timer.getId());
             EditMessageText editMessageText = BotApiMethodBuilder
-                    .makeEditMessageText(chatId, messageId, getTimerInfo(timer));
-            editMessageText.setReplyMarkup(getInlineMessageButtons());
+                    .makeEditMessageText(chatId, messageId, getTimerInfo(timer, taskList));
+            editMessageText.setReplyMarkup(getInlineMessageTimerStatusButtons(timer.getStatus()));
             return editMessageText;
         }
 
@@ -76,16 +80,17 @@ public class TimerHandler implements MessageHandler {
 
             EditMessageText editMessageText = BotApiMethodBuilder
                     .makeEditMessageText(chatId, messageId,
-                            getTimerInfo(timer));
-            editMessageText.setReplyMarkup(getInlineMessageStartButtons());
+                            getTimerInfo(timer, taskList));
+            editMessageText.setReplyMarkup(getInlineMessageTimerStatusButtons(timer.getStatus()));
             return editMessageText;
         }
 
         if (botState.equals(BotState.TIMER_PAUSE)) {
             timer = timerService.updateTimerStatus(timer.getId(), TimerStatus.PAUSED.name());
+
             EditMessageText editMessageText = BotApiMethodBuilder
-                    .makeEditMessageText(chatId, messageId, getTimerInfo(timer));
-            editMessageText.setReplyMarkup(TimerHandler.getInlineMessagePauseButtons());
+                    .makeEditMessageText(chatId, messageId, getTimerInfo(timer, taskList));
+            editMessageText.setReplyMarkup(getInlineMessageTimerStatusButtons(timer.getStatus()));
             return editMessageText;
         }
         timerService.getTimersByUserId(userEntity.getId(), telegramBot.sendReturnedMessage(replyMessage).getMessageId());
@@ -93,91 +98,72 @@ public class TimerHandler implements MessageHandler {
         return null;
     }
 
-    public static String getTimerInfo(Timer timer, String firstText) {
+    public static String getTimerInfo(Timer timer,  String firstText, List<Task> taskList) {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(firstText);
-        for (Task task: timer.getTasks()) {
-            stringBuilder.append(task.getId() + "\n"
-                    + task.getName() + "\n"
-                    + task.getComment() + "\n"
-                    + task.getStatus() + "\n\n");
-        }
-        stringBuilder.append(timer.getStatus());
-        return stringBuilder.toString();
+        stringBuilder.append(firstText).append("\n");
+        return stringBuilder.append(getTimerInfo(timer, taskList)).toString();
     }
 
-    public static String getTimerInfo(Timer timer) {
+    public static String getTimerInfo(Timer timer, List<Task> taskList) {
         StringBuilder stringBuilder = new StringBuilder();
-        if (timer.getTasks() != null && !timer.getTasks().isEmpty()) {
-            for (Task task: timer.getTasks()) {
-                stringBuilder.append(task.getId() + "\n" + task.getName() + "\n" + task.getComment() + "\n\n");
+        if (taskList != null && !taskList.isEmpty()) {
+            for (Task task : taskList) {
+                stringBuilder.append(String.format(
+                        "\uD83D\uDE80 [%s] %s\n",
+                        task.getPriority(), task.getName()
+                ));
+                for (Task child : task.getChildTasks()) {
+                    stringBuilder.append("      \uD83D\uDCCC ").append(String.format(
+                            "[%s] %s\n",
+                            child.getPriority(), child.getName()
+                    ));
+                }
+                stringBuilder.append("\n");
             }
         }
-        stringBuilder.append(timer.getStatus());
+        if (!timer.getStatus().equals(TimerStatus.PENDING) && timer.getStopTime() != null) {
+            String timeString = timer.getStopTime().format(DateTimeFormatter.ofPattern("HH:mm"));
+            stringBuilder.append("⏱ ").append("Время остановки: ").append(timeString);
+            stringBuilder.append("\n");
+        }
+
+        stringBuilder.append("**Интервал: ").append((timer.getInterval() / 2) + 1).append("\n");
+        stringBuilder.append(TimerIntervalState.getTimerState(timer).getState()).append("\n");
+        if (timer.getStatus().equals(TimerStatus.PAUSED)) {
+            stringBuilder.append("\uD83D\uDCE2 Таймер остановлен\n");
+        }
+
         return stringBuilder.toString();
     }
 
-    public static InlineKeyboardMarkup getInlineMessageStartButtons() {
+    public static InlineKeyboardMarkup getInlineMessageTimerStatusButtons(TimerStatus timerStatus) {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
 
-        InlineKeyboardButton tasksListButton = new InlineKeyboardButton("Задачи");
-        InlineKeyboardButton pauseButton = new InlineKeyboardButton("Пауза");
-        InlineKeyboardButton stopButton = new InlineKeyboardButton("Стоп");
+        InlineKeyboardButton tasksListButton = new InlineKeyboardButton("\uD83D\uDCCB");
+        InlineKeyboardButton settingsListButton = new InlineKeyboardButton("⚙");
+        InlineKeyboardButton startButton = new InlineKeyboardButton("▶️");
+        InlineKeyboardButton stopButton = new InlineKeyboardButton("⏹");
+        InlineKeyboardButton pauseButton = new InlineKeyboardButton("⏸");
 
+        startButton.setCallbackData(BotState.TIMER_START.getCommand());
+        settingsListButton.setCallbackData(BotState.TIMER_SETTINGS.getCommand());
         tasksListButton.setCallbackData(BotState.TIMER_TASKS_LIST.getCommand());
         pauseButton.setCallbackData(BotState.TIMER_PAUSE.getCommand());
         stopButton.setCallbackData(BotState.TIMER_STOP.getCommand());
 
-        List<InlineKeyboardButton> row1 = new ArrayList<>();
-        row1.add(pauseButton);
-        row1.add(stopButton);
-
-        List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
-        rowList.add(Arrays.asList(tasksListButton));
-        rowList.add(row1);
-
-        inlineKeyboardMarkup.setKeyboard(rowList);
-        return inlineKeyboardMarkup;
-    }
-
-    public static InlineKeyboardMarkup getInlineMessagePauseButtons() {
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-
-        InlineKeyboardButton tasksListButton = new InlineKeyboardButton("Задачи");
-        InlineKeyboardButton startButton = new InlineKeyboardButton("Старт");
-        InlineKeyboardButton stopButton = new InlineKeyboardButton("Стоп");
-
-        tasksListButton.setCallbackData(BotState.TIMER_TASKS_LIST.getCommand());
-        startButton.setCallbackData(BotState.TIMER_START.getCommand());
-        stopButton.setCallbackData(BotState.TIMER_STOP.getCommand());
-
-        List<InlineKeyboardButton> row1 = new ArrayList<>();
-        row1.add(startButton);
-        row1.add(stopButton);
-
-        List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
-        rowList.add(Arrays.asList(tasksListButton));
-        rowList.add(row1);
-
-        inlineKeyboardMarkup.setKeyboard(rowList);
-        return inlineKeyboardMarkup;
-    }
-
-    public static InlineKeyboardMarkup getInlineMessageButtons() {
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-
-        InlineKeyboardButton tasksListButton = new InlineKeyboardButton("Задачи");
-        InlineKeyboardButton startButton = new InlineKeyboardButton("Старт");
-
-        tasksListButton.setCallbackData(BotState.TIMER_TASKS_LIST.getCommand());
-        startButton.setCallbackData(BotState.TIMER_START.getCommand());
-
-        List<InlineKeyboardButton> row1 = new ArrayList<>();
-        row1.add(startButton);
-        row1.add(tasksListButton);
-
-        List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
-        rowList.add(row1);
+        rowList.add(Arrays.asList(settingsListButton, tasksListButton));
+        switch (timerStatus) {
+            case PENDING:
+                rowList.add(Arrays.asList(startButton));
+                break;
+            case RUNNING:
+                rowList.add(Arrays.asList(stopButton, pauseButton));
+                break;
+            case PAUSED:
+                rowList.add(Arrays.asList(stopButton, startButton));
+                break;
+        }
 
         inlineKeyboardMarkup.setKeyboard(rowList);
         return inlineKeyboardMarkup;

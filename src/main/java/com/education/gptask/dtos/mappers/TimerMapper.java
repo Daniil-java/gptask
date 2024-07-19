@@ -9,7 +9,6 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface TimerMapper {
     TimerDto entityToDto(Timer timer);
-
     Timer dtoToEntity(TimerDto timerDto);
     List<TimerDto> entityListToDtoList(List<Timer> timerList);
     List<Timer> dtoListToEntityList(List<TimerDto> timerDtoList);
