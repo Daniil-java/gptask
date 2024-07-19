@@ -4,11 +4,12 @@ import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageTe
 
 public class BotApiMethodBuilder {
     public static EditMessageText makeEditMessageText(Long chatId, int messageId, String text) {
-        EditMessageText editMessageText = new EditMessageText();
-        editMessageText.setChatId(chatId);
-        editMessageText.setMessageId(messageId);
-        editMessageText.setText(text);
-        return editMessageText;
+
+        return EditMessageText.builder()
+                .chatId(chatId)
+                .text(text)
+                .messageId(messageId)
+                .build();
     }
 
 }

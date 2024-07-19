@@ -10,6 +10,7 @@ public enum BotState {
     TIMER("/timer"), TIMER_START("/timer_start"),
     TIMER_PAUSE("/timer_pause"), TIMER_STATUS("/timer_status"),
     TIMER_STOP("/timer_stop"),
+    TIMER_COMPLETE("/timer_complete"),
     TIMER_TASKS_LIST("/timer_tasks_list"),
     TIMER_TASKS_LIST_DELETE("/timer_tasks_list_delete"),
     TIMER_TASKS_LIST_DONE("/timer_tasks_list_done"),
@@ -33,7 +34,7 @@ public enum BotState {
     TASK_MAIN_MENU("/task_main_menu"), TASK_MAIN_MENU_CLOSE("/task_main_menu_close"),
     TASK_CREATE_COMMENT("/task_create_name"),
     PROCESSING(""),
-    NOTIFICATION_TIMER_ALERT("/notification_timer_alert");
+    NOTIFICATION_TIMER_ALERT("/notification_timer_alert"), INFO("/info"), INFO_CLOSE("/info_close");
 
     private String command;
 

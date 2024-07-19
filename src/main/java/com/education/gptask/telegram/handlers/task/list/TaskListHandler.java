@@ -20,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
@@ -27,6 +28,7 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -65,6 +67,8 @@ public class TaskListHandler implements MessageHandler {
                         getTaskInfo(task)
                 );
                 editMessageText.setReplyMarkup(getInlineMessageButtons(taskId));
+                editMessageText.enableMarkdown(true);
+                editMessageText.setParseMode(ParseMode.HTML);
                 return editMessageText;
             }
 
@@ -216,17 +220,22 @@ public class TaskListHandler implements MessageHandler {
 
     private String getTaskInfo(Task task) {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder
-                .append(String.format("[%s] %s\n", task.getId(), task.getName()))
-                .append(task.getComment())
-                .append("\n\n");
+        stringBuilder.append(String.format("<strong>[%s] %s</strong>", task.getPriority(), task.getName()));
+        stringBuilder.append("\n");
+        stringBuilder.append("\uD83D\uDCC5 <strong>Дата создания: </strong>").append(task.getCreated().format(DateTimeFormatter.ISO_DATE));
+        stringBuilder.append("\n");
+        if (task.getComment() != null) {
+            stringBuilder.append(task.getComment());
+            stringBuilder.append("\n");
+        }
 
-        for (Task t: task.getChildTasks()) {
-            stringBuilder
-                    .append(String.format("[%s] %s\n", t.getId(), t.getName()))
-                    .append(t.getComment())
-                    .append("\n");
-
+        if (!task.getChildTasks().isEmpty()) {
+            stringBuilder.append("\uD83D\uDCCB <strong>Подзадачи: </strong>");
+            stringBuilder.append("\n");
+            for (Task t: task.getChildTasks()) {
+                stringBuilder.append(String.format("        [%s] %s", t.getPriority(), t.getName()));
+                stringBuilder.append("\n");
+            }
         }
 
         return stringBuilder.toString();

@@ -112,7 +112,7 @@ public class TaskHandler implements MessageHandler {
             sendMessage.setText("You don't have any task");
             sendMessage.setReplyMarkup(getInlineMessageButtons());
         } else {
-            sendMessage.setText("LIST:");
+            sendMessage.setText("\uD83D\uDCCB Выберите задачу:");
             sendMessage.setReplyMarkup(
                     getInlineMessageListTaskButtons(taskList, LIST_PAGE_ROW_COUNT, page, isSub));
         }

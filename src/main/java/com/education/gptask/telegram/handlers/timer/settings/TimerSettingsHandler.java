@@ -13,6 +13,7 @@ import com.education.gptask.telegram.utils.keyboards.InlineKeyboardBuilder;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
@@ -48,6 +49,8 @@ public class TimerSettingsHandler implements MessageHandler {
                         timer.getTelegramMessageId(),
                         "Enter value"
                 );
+        editMessageText.enableMarkdown(true);
+        editMessageText.setParseMode(ParseMode.HTML);
         if (botState.equals(BotState.TIMER_SETTINGS)) {
             if (userAnswer.equals("/back")) {
                 userEntity.setBotState(BotState.TIMER_STATUS);
@@ -59,19 +62,14 @@ public class TimerSettingsHandler implements MessageHandler {
             return editMessageText;
         }
 
-        if (botState.equals(BotState.TIMER_SETTINGS_AUTOSTART_BREAK)) {
+        if (botState.equals(BotState.TIMER_SETTINGS_AUTOSTART_BREAK)
+            || botState.equals(BotState.TIMER_SETTINGS_AUTOSTART_WORK)) {
             if (userAnswer.equals("true") || userAnswer.equals("false")) {
-                timer.setAutostartBreak(Boolean.valueOf(userAnswer));
-            } else {
-                editMessageText.setText("Choose value");
-                editMessageText.setReplyMarkup(InlineKeyboardBuilder.getTrueOrFalseK());
-                return editMessageText;
-            }
-        }
-
-        if (botState.equals(BotState.TIMER_SETTINGS_AUTOSTART_WORK)) {
-            if (userAnswer.equals("true") || userAnswer.equals("false")) {
-                timer.setAutostartWork(Boolean.valueOf(userAnswer));
+                if (botState.equals(BotState.TIMER_SETTINGS_AUTOSTART_BREAK)) {
+                    timer.setAutostartBreak(Boolean.valueOf(userAnswer));
+                } else if (botState.equals(BotState.TIMER_SETTINGS_AUTOSTART_WORK)) {
+                    timer.setAutostartWork(Boolean.valueOf(userAnswer));
+                }
             } else {
                 editMessageText.setText("Choose value");
                 editMessageText.setReplyMarkup(InlineKeyboardBuilder.getTrueOrFalseK());
@@ -85,16 +83,6 @@ public class TimerSettingsHandler implements MessageHandler {
                 if (duration == -1) return replyMessage;
                 timer.setLongBreakDuration(duration);
             } else return editMessageText;
-        }
-
-        if (botState.equals(BotState.TIMER_SETTINGS_LBREAK_INTERVAL)) {
-            if (!userAnswer.isEmpty() && !userAnswer.equals(BotState.TIMER_SETTINGS_LBREAK_INTERVAL.getCommand())) {
-                int interval = tryToParseIntPositive(userAnswer);
-                if (interval == -1) return replyMessage;
-                timer.setLongBreakInterval(interval);
-            } else {
-                return editMessageText;
-            }
         }
 
         if (botState.equals(BotState.TIMER_SETTINGS_WORK)) {
@@ -112,6 +100,17 @@ public class TimerSettingsHandler implements MessageHandler {
                 timer.setShortBreakDuration(duration);
             } else return editMessageText;
         }
+
+        if (botState.equals(BotState.TIMER_SETTINGS_LBREAK_INTERVAL)) {
+            if (!userAnswer.isEmpty() && !userAnswer.equals(BotState.TIMER_SETTINGS_LBREAK_INTERVAL.getCommand())) {
+                int interval = tryToParseIntPositive(userAnswer);
+                if (interval == -1) return replyMessage;
+                timer.setLongBreakInterval(interval);
+            } else {
+                return editMessageText;
+            }
+        }
+
         if (!botState.equals(BotState.TIMER_SETTINGS)) {
             if (!(botState.equals(BotState.TIMER_SETTINGS_AUTOSTART_WORK) || botState.equals(BotState.TIMER_SETTINGS_AUTOSTART_BREAK))) {
                 DeleteMessage deleteMessage = new DeleteMessage(String.valueOf(chatId), messageId);
@@ -132,20 +131,20 @@ public class TimerSettingsHandler implements MessageHandler {
 
     private static String getTimerSettingsInfo(Timer timer) {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("\uD83D\uDCBC ").append("Рабочее время: ").append(timer.getWorkDuration()).append(" мин.").append("\n");
-        stringBuilder.append("⏸ ").append("Время короткой паузы: ").append(timer.getShortBreakDuration()).append(" мин.").append("\n");
-        stringBuilder.append("☕ ").append("Время длинной паузы: ").append(timer.getLongBreakDuration()).append(" мин.").append("\n");
-        stringBuilder.append("\uD83D\uDD01 ").append("Интервал длинной паузы: ").append(timer.getLongBreakInterval()).append("\n");
+        stringBuilder.append("\uD83D\uDCBC ").append("<strong>Рабочее время: </strong>").append(timer.getWorkDuration()).append(" мин.").append("\n");
+        stringBuilder.append("⏸ ").append("<strong>Короткая пауза: </strong>").append(timer.getShortBreakDuration()).append(" мин.").append("\n");
+        stringBuilder.append("☕ ").append("<strong>Длинная пауза: </strong>").append(timer.getLongBreakDuration()).append(" мин.").append("\n");
+        stringBuilder.append("\uD83D\uDD01 ").append("<strong>Интервал длинной паузы: </strong>").append(timer.getLongBreakInterval()).append("\n");
         if (timer.isAutostartWork()) {
-            stringBuilder.append("✔ ").append("Автостарт таймера работы: ON").append("\n");
+            stringBuilder.append("✔ ").append("<strong>Автостарт таймера работы: </strong>ON").append("\n");
         } else {
-            stringBuilder.append("❌ ").append("Автостарт таймера работы: OFF").append("\n");
+            stringBuilder.append("❌ ").append("<strong>Автостарт таймера работы: </strong>OFF").append("\n");
         }
 
         if (timer.isAutostartBreak()) {
-            stringBuilder.append("✔ ").append("Автостарт таймера паузы: ON").append("\n");
+            stringBuilder.append("✔ ").append("<strong>Автостарт таймера паузы: </strong>ON").append("\n");
         } else {
-            stringBuilder.append("❌ ").append("Автостарт таймера паузы: OFF").append("\n");
+            stringBuilder.append("❌ ").append("<strong>Автостарт таймера паузы: </strong>OFF").append("\n");
         }
 
         return stringBuilder.toString();

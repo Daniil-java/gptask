@@ -1,0 +1,147 @@
+package com.education.gptask.telegram.handlers.info;
+
+import com.education.gptask.entities.UserEntity;
+import com.education.gptask.entities.task.Status;
+import com.education.gptask.entities.task.Task;
+import com.education.gptask.entities.timer.Timer;
+import com.education.gptask.entities.timer.TimerIntervalState;
+import com.education.gptask.services.TimerService;
+import com.education.gptask.telegram.TelegramBot;
+import com.education.gptask.telegram.entities.BotState;
+import com.education.gptask.telegram.handlers.MessageHandler;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.ParseMode;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+@Component
+@AllArgsConstructor
+@Slf4j
+public class InfoHandler implements MessageHandler {
+    private final TimerService timerService;
+    private final TelegramBot telegramBot;
+
+    @Override
+    public BotApiMethod handle(Message message, UserEntity userEntity) {
+        String chatId = String.valueOf(message.getChatId());
+        int messageId = message.getMessageId();
+        String userAnswer = message.getText();
+        BotState botState = userEntity.getBotState();
+
+        telegramBot.sendMessage(new DeleteMessage(chatId, messageId));
+
+        if (botState.equals(BotState.INFO)) {
+            if (userAnswer != null && userAnswer.startsWith("/info_close")) {
+                int msgId = Integer.parseInt(userAnswer.substring("/info_close".length()));
+                return new DeleteMessage(chatId, msgId);
+            }
+            LocalDateTime localDateTime = LocalDateTime.now().minusDays(90);
+            List<Timer> timerList = timerService.
+                    getCompletedTimersByUserIdAndCreatedAfterDate(userEntity.getId(), localDateTime);
+
+            for (Timer timer: timerList) {
+                if (timer.getInterval() == 0) continue;
+                String answer = getTimerInfo(timer);
+                SendMessage sendMessage = new SendMessage(chatId, answer);
+                sendMessage.setReplyMarkup(getInlineMessageButtons(timer.getId()));
+                sendMessage.enableMarkdown(true);
+                sendMessage.setParseMode(ParseMode.HTML);
+                Message returnedMsg = telegramBot.sendReturnedMessage(sendMessage);
+
+                timer.setTelegramMessageId(returnedMsg.getMessageId());
+                timerService.updateTimer(timer);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    log.error("Info Handler Error");
+                }
+
+            }
+
+        }
+
+
+        return null;
+    }
+
+    public static List<String> getTimerTasksInfo(List<Timer> timerList) {
+        List<String> infoList = new ArrayList<>();
+        for (Timer t: timerList) {
+            if (t.getInterval() == 0) continue;
+            StringBuilder builder = new StringBuilder();
+
+            builder.append("\uD83D\uDCC5 <strong>Дата: </strong>");
+            builder.append(t.getCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
+
+            builder.append("\n");
+            builder.append(TimerIntervalState.getTimeSpent(t));
+            builder.append("\n");
+            builder.append("\uD83D\uDCCB <strong>Задачи: </strong>").append("\n");
+            if (!t.getTasks().isEmpty()) {
+                for (Task task: t.getTasks()) {
+                    String emoji;
+                    if (task.getStatus().equals(Status.DONE)) emoji = "✅";
+                    else emoji = "❎";
+                    builder.append(String.format("      %s [%s] %s", emoji, task.getPriority(), task.getName()));
+                    builder.append("\n");
+                }
+            }
+
+            infoList.add(builder.toString());
+        }
+        return infoList;
+    }
+
+    public static String getTimerInfo(Timer timer) {
+        if (timer.getInterval() == 0) return "";
+        StringBuilder builder = new StringBuilder();
+        builder.append("\uD83D\uDCC5 <strong>Дата: </strong>");
+        builder.append(timer.getCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
+        builder.append("\n");
+        builder.append(TimerIntervalState.getTimeSpent(timer));
+        builder.append("\n");
+        builder.append("\uD83D\uDCCB <strong>Задачи: </strong>");
+        builder.append("\n");
+        if (!timer.getTasks().isEmpty()) {
+            for (Task task: timer.getTasks()) {
+                String emoji;
+                if (task.getStatus().equals(Status.DONE)) emoji = "✅";
+                else emoji = "❎";
+                builder.append(String.format("      %s [%s] %s", emoji, task.getPriority(), task.getName()));
+                builder.append("\n");
+            }
+        }
+        return builder.toString();
+    }
+
+    public static InlineKeyboardMarkup getInlineMessageButtons(long timerId) {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
+
+        InlineKeyboardButton closeButton = new InlineKeyboardButton("Ок");
+        closeButton.setCallbackData(BotState.INFO_CLOSE.getCommand() + timerId);
+
+        rowList.add(Arrays.asList(closeButton));
+
+        inlineKeyboardMarkup.setKeyboard(rowList);
+        return inlineKeyboardMarkup;
+    }
+
+
+    @Override
+    public List<BotState> getHandlerListName() {
+        return Arrays.asList(BotState.INFO);
+    }
+}

@@ -14,6 +14,7 @@ import com.education.gptask.telegram.utils.builders.BotApiMethodBuilder;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -43,6 +44,7 @@ public class TimerTasksListHandler implements MessageHandler {
                 timer.getTelegramMessageId(),
                 TimerHandler.getTimerInfo(timer, botState.toString(), taskList)
         );
+        editMessageText.setParseMode(ParseMode.HTML);
         if (botState.equals(BotState.TIMER_TASKS_LIST)) {
             editMessageText.setReplyMarkup(getInlineMessageButtons());
             return editMessageText;
@@ -103,7 +105,9 @@ public class TimerTasksListHandler implements MessageHandler {
         List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
 
         for (Task task: timer.getTasks()) {
-            InlineKeyboardButton button = new InlineKeyboardButton(task.getId().toString());
+            InlineKeyboardButton button = new InlineKeyboardButton(
+                    String.format("[%s] %s", task.getPriority(), task.getName())
+            );
             button.setCallbackData("/delete" + task.getId());
             rowList.add(Arrays.asList(button));
         }
