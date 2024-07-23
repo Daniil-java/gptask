@@ -49,16 +49,13 @@ public class TaskHandler implements MessageHandler {
         if (botState.equals(BotState.TASK)) {
             userEntity.setBotState(BotState.TASK_LIST);
             if (userEntity.getLastUpdatedTaskMessageId() != null) {
-                DeleteMessage deleteLastTaskMessage =
-                        new DeleteMessage(
-                                String.valueOf(chatId),
-                                Math.toIntExact(userEntity.getLastUpdatedTaskMessageId())
-                        );
-                telegramBot.sendMessage(deleteLastTaskMessage);
+                telegramBot.sendMessage(new DeleteMessage(
+                        String.valueOf(chatId),
+                        userEntity.getLastUpdatedTaskMessageId().intValue()
+                ));
             }
-            DeleteMessage deleteMessage = new DeleteMessage(String.valueOf(chatId), messageId);
-            telegramBot.sendMessage(deleteMessage);
-            List<Task> taskList = taskService.getParentTasksByUserId(
+            telegramBot.sendMessage(new DeleteMessage(String.valueOf(chatId), messageId));
+            List<Task> taskList = taskService.getParentDoneTasksByUserId(
                             userEntity.getId(),
                             PageRequest.of(0, LIST_PAGE_ROW_COUNT, Sort.by("id"))
             );
@@ -78,13 +75,13 @@ public class TaskHandler implements MessageHandler {
                         ? Integer.parseInt(userAnswer.substring("/next".length()))
                         : Integer.parseInt(userAnswer.substring("/prev".length()));
             }
-            taskList = taskService.getParentTasksByUserId(
+            taskList = taskService.getParentDoneTasksByUserId(
                     userEntity.getId(),
                     PageRequest.of(page, LIST_PAGE_ROW_COUNT, Sort.by("id")));
 
             editMessageText = MessageTypeConverter
                     .convertSendToEdit(getList(taskList, chatId, page, false));
-            editMessageText.setMessageId(Math.toIntExact(userEntity.getLastUpdatedTaskMessageId()));
+            editMessageText.setMessageId(userEntity.getLastUpdatedTaskMessageId().intValue());
             userEntity.setBotState(BotState.TASK_LIST);
             userService.updateUserEntity(userEntity);
             return editMessageText;
@@ -92,7 +89,7 @@ public class TaskHandler implements MessageHandler {
 
         if (botState.equals(BotState.TASK_MAIN_MENU_CLOSE)) {
             if (userEntity.getLastUpdatedTaskMessageId() != null) {
-                return new DeleteMessage(String.valueOf(chatId), Math.toIntExact(userEntity.getLastUpdatedTaskMessageId()));
+                return new DeleteMessage(String.valueOf(chatId), userEntity.getLastUpdatedTaskMessageId().intValue());
             }
         }
 

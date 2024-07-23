@@ -1,17 +1,19 @@
 package com.education.gptask.telegram.handlers.processors;
 
+import com.education.gptask.entities.task.Task;
 import com.education.gptask.entities.timer.Timer;
+import com.education.gptask.services.TaskService;
 import com.education.gptask.services.TimerService;
 import com.education.gptask.telegram.TelegramBot;
 import com.education.gptask.telegram.entities.BotState;
 import com.education.gptask.telegram.handlers.timer.TimerHandler;
-import com.education.gptask.telegram.utils.builders.BotApiMethodBuilder;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -25,6 +27,7 @@ import java.util.List;
 @Slf4j
 public class TimerScheduleProcessor {
     private final TimerService timerService;
+    private final TaskService taskService;
     private final TelegramBot telegramBot;
 
     public void process() {
@@ -52,14 +55,17 @@ public class TimerScheduleProcessor {
         List<BotApiMethod> messages = new ArrayList<>();
         for (Timer timer: timers) {
             log.info(timer.getId() + " --- " + timer.getStatus());
-            EditMessageText editMessageText = BotApiMethodBuilder
-                    .makeEditMessageText(
-                            timer.getUserEntity().getChatId(),
-                            timer.getTelegramMessageId(),
-                            timer.getStatus().name()
-                            );
-            editMessageText.setReplyMarkup(TimerHandler.getInlineMessageTimerStatusButtons(timer.getStatus()));
-            messages.add(editMessageText);
+            List<Task> taskList = null;
+            if (!timer.getTasks().isEmpty()) {
+                taskList = taskService.getTasksByTimerId(timer.getId());
+            }
+            messages.add(EditMessageText.builder()
+                    .chatId(timer.getUserEntity().getChatId())
+                    .messageId(timer.getTelegramMessageId())
+                    .text(TimerHandler.getTimerInfo(timer, taskList))
+                    .replyMarkup(TimerHandler.getInlineMessageTimerStatusButtons(timer.getStatus()))
+                    .parseMode(ParseMode.HTML).build()
+            );
 
             SendMessage sendMessage = new SendMessage(
                     String.valueOf(timer.getUserEntity().getChatId()),

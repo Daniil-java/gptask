@@ -93,14 +93,6 @@ public class TimerHandler implements MessageHandler {
         stringBuilder.append("\uD83D\uDCC5 <strong>Дата: </strong>");
         stringBuilder.append(timer.getCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
         stringBuilder.append("\n");
-        stringBuilder.append(TimerIntervalState.getTimeSpent(timer));
-        stringBuilder.append("\n");
-
-        if (!timer.getStatus().equals(TimerStatus.PENDING) && timer.getStopTime() != null) {
-            String timeString = timer.getStopTime().format(DateTimeFormatter.ofPattern("HH:mm"));
-            stringBuilder.append("⏱ ").append("<strong>Время остановки: </strong>").append(timeString);
-            stringBuilder.append("\n");
-        }
 
         stringBuilder.append("\uD83D\uDEA5 <strong>Интервал: </strong>").append((timer.getInterval() / 2) + 1);
         stringBuilder.append("\n");
@@ -109,6 +101,12 @@ public class TimerHandler implements MessageHandler {
         stringBuilder.append("\n");
         if (timer.getStatus().equals(TimerStatus.PAUSED)) {
             stringBuilder.append("\uD83D\uDCE2 <strong>Таймер остановлен</strong>");
+            stringBuilder.append("\n");
+        }
+
+        if (!timer.getStatus().equals(TimerStatus.PENDING) && timer.getStopTime() != null) {
+            String timeString = timer.getStopTime().format(DateTimeFormatter.ofPattern("HH:mm"));
+            stringBuilder.append("⏱ ").append("<strong>Время остановки: </strong>").append(timeString);
             stringBuilder.append("\n");
         }
 

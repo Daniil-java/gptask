@@ -61,7 +61,6 @@ public class InfoHandler implements MessageHandler {
                 Message returnedMsg = telegramBot.sendReturnedMessage(sendMessage);
 
                 timer.setTelegramMessageId(returnedMsg.getMessageId());
-                timerService.updateTimer(timer);
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
@@ -71,8 +70,6 @@ public class InfoHandler implements MessageHandler {
             }
 
         }
-
-
         return null;
     }
 

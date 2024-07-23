@@ -8,7 +8,6 @@ import com.education.gptask.telegram.TelegramBot;
 import com.education.gptask.telegram.entities.BotState;
 import com.education.gptask.telegram.handlers.MessageHandler;
 import com.education.gptask.telegram.handlers.timer.TimerHandler;
-import com.education.gptask.telegram.utils.builders.BotApiMethodBuilder;
 import com.education.gptask.telegram.utils.keyboards.InlineKeyboardBuilder;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -42,15 +41,13 @@ public class TimerSettingsHandler implements MessageHandler {
         SendMessage replyMessage = new SendMessage(String.valueOf(chatId),
                 "Что-то пошло не так ¯\\_(ツ)_/¯");
 
-
         Timer timer = timerService.getTimersByUserId(userEntity.getId()).get(0);
-        EditMessageText editMessageText = BotApiMethodBuilder
-                .makeEditMessageText(chatId,
-                        timer.getTelegramMessageId(),
-                        "Enter value"
-                );
-        editMessageText.enableMarkdown(true);
-        editMessageText.setParseMode(ParseMode.HTML);
+        EditMessageText editMessageText = EditMessageText.builder()
+                .chatId(chatId)
+                .messageId(timer.getTelegramMessageId())
+                .text("Введите целое число, больше 0")
+                .parseMode(ParseMode.HTML).build();
+
         if (botState.equals(BotState.TIMER_SETTINGS)) {
             if (userAnswer.equals("/back")) {
                 userEntity.setBotState(BotState.TIMER_STATUS);
@@ -75,37 +72,23 @@ public class TimerSettingsHandler implements MessageHandler {
                 editMessageText.setReplyMarkup(InlineKeyboardBuilder.getTrueOrFalseK());
                 return editMessageText;
             }
-        }
-
-        if (botState.equals(BotState.TIMER_SETTINGS_LBREAK)) {
-            if (!userAnswer.isEmpty() && !userAnswer.equals(BotState.TIMER_SETTINGS_LBREAK.getCommand())) {
-                int duration = tryToParseIntPositive(userAnswer);
-                if (duration == -1) return replyMessage;
-                timer.setLongBreakDuration(duration);
-            } else return editMessageText;
-        }
-
-        if (botState.equals(BotState.TIMER_SETTINGS_WORK)) {
-            if (!userAnswer.isEmpty() && !userAnswer.equals(BotState.TIMER_SETTINGS_WORK.getCommand())) {
-                int duration = tryToParseIntPositive(userAnswer);
-                if (duration == -1) return replyMessage;
-                timer.setWorkDuration(duration);
-            } else return editMessageText;
-        }
-
-        if (botState.equals(BotState.TIMER_SETTINGS_SBREAK)) {
-            if (!userAnswer.isEmpty() && !userAnswer.equals(BotState.TIMER_SETTINGS_SBREAK.getCommand())) {
-                int duration = tryToParseIntPositive(userAnswer);
-                if (duration == -1) return replyMessage;
-                timer.setShortBreakDuration(duration);
-            } else return editMessageText;
-        }
-
-        if (botState.equals(BotState.TIMER_SETTINGS_LBREAK_INTERVAL)) {
-            if (!userAnswer.isEmpty() && !userAnswer.equals(BotState.TIMER_SETTINGS_LBREAK_INTERVAL.getCommand())) {
-                int interval = tryToParseIntPositive(userAnswer);
-                if (interval == -1) return replyMessage;
-                timer.setLongBreakInterval(interval);
+        } else {
+            int value = tryToParseIntPositive(userAnswer);
+            if (value > -1) {
+                switch (botState) {
+                    case TIMER_SETTINGS_LBREAK:
+                        timer.setLongBreakDuration(value);
+                        break;
+                    case TIMER_SETTINGS_WORK:
+                        timer.setWorkDuration(value);
+                        break;
+                    case TIMER_SETTINGS_SBREAK:
+                        timer.setShortBreakDuration(value);
+                        break;
+                    case TIMER_SETTINGS_LBREAK_INTERVAL:
+                        timer.setLongBreakInterval(value);
+                        break;
+                }
             } else {
                 return editMessageText;
             }
@@ -151,6 +134,7 @@ public class TimerSettingsHandler implements MessageHandler {
     }
 
     private int tryToParseIntPositive(String str) {
+        if (str == null) return -1;
         int integer;
         try {
             integer = Integer.parseInt(str);

@@ -14,7 +14,6 @@ import com.education.gptask.telegram.utils.builders.BotApiMethodBuilder;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
-import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -44,10 +43,9 @@ public class TimerTasksListHandler implements MessageHandler {
                 timer.getTelegramMessageId(),
                 TimerHandler.getTimerInfo(timer, botState.toString(), taskList)
         );
-        editMessageText.setParseMode(ParseMode.HTML);
+
         if (botState.equals(BotState.TIMER_TASKS_LIST)) {
             editMessageText.setReplyMarkup(getInlineMessageButtons());
-            return editMessageText;
         }
 
         if (botState.equals(BotState.TIMER_TASKS_LIST_DELETE)) {
@@ -59,7 +57,6 @@ public class TimerTasksListHandler implements MessageHandler {
             } else {
                 editMessageText.setReplyMarkup(getInlineMessageUnbindButtons(timer));
             }
-            return editMessageText;
         }
 
         if (botState.equals(BotState.TIMER_TASKS_LIST_DONE)) {
@@ -72,11 +69,10 @@ public class TimerTasksListHandler implements MessageHandler {
                 return handle(message, userEntity);
             } else {
                 editMessageText.setReplyMarkup(getInlineMessageDoneButtons(timer));
-                return editMessageText;
             }
 
         }
-        return null;
+        return editMessageText;
     }
 
     public static InlineKeyboardMarkup getInlineMessageButtons() {

@@ -51,66 +51,53 @@ public class TaskListHandler implements MessageHandler {
         BotState botState = userEntity.getBotState();
         SendMessage replyMessage = new SendMessage(String.valueOf(chatId),
                 "Что-то пошло не так ¯\\_(ツ)_/¯");
+        EditMessageText editMessageText = EditMessageText.builder()
+                .chatId(chatId)
+                .messageId(userEntity.getLastUpdatedTaskMessageId().intValue())
+                .parseMode(ParseMode.HTML)
+                .text("Что-то пошло не так ¯\\_(ツ)_/¯")
+                .build();
 
         if (botState.equals(BotState.TASK_LIST)) {
             if (!userAnswer.isEmpty() && userAnswer.startsWith("/id")) {
-                long taskId;
-                try {
-                    taskId = Long.parseLong(userAnswer.substring("/id".length()));
-                } catch (NumberFormatException e) {
-                    return replyMessage;
-                }
+                long taskId = tryToParseLongPositive(userAnswer.substring("/id".length()));
                 Task task = taskService.getTaskById(taskId);
-                EditMessageText editMessageText = BotApiMethodBuilder.makeEditMessageText(
-                        chatId,
-                        Math.toIntExact(userEntity.getLastUpdatedTaskMessageId()),
-                        getTaskInfo(task)
-                );
+                editMessageText.setText(getTaskInfo(task));
                 editMessageText.setReplyMarkup(getInlineMessageButtons(taskId));
-                editMessageText.enableMarkdown(true);
-                editMessageText.setParseMode(ParseMode.HTML);
                 return editMessageText;
             }
 
-
             if (!userAnswer.isEmpty() && userAnswer.startsWith("/delete")) {
-                long taskId = Long.parseLong(userAnswer.substring("/delete".length()));
+                long taskId = tryToParseLongPositive(userAnswer.substring("/delete".length()));
                 taskService.deleteTaskById(taskId);
                 userEntity.setBotState(BotState.TASK_MAIN_MENU);
                 return taskHandler.handle(message, userEntity);
             }
             if (!userAnswer.isEmpty() && userAnswer.startsWith("/add")) {
-                long taskId = Long.parseLong(userAnswer.substring("/add".length()));
+                long taskId = tryToParseLongPositive(userAnswer.substring("/add".length()));
                 long timerId = timerService.getTimersByUserId(userEntity.getId()).get(0).getId();
                 timerService.bindTaskToTimer(timerId, taskId);
                 return new SendMessage(String.valueOf(chatId), "Task has has added to timer!");
             }
             if (!userAnswer.isEmpty() && userAnswer.startsWith("/done")) {
-                long taskId = Long.parseLong(userAnswer.substring("/done".length()));
+                long taskId = tryToParseLongPositive(userAnswer.substring("/done".length()));
                 Task task = taskService.getTaskById(taskId);
                 task.setStatus(Status.DONE);
                 taskService.createTask(task);
-                EditMessageText editMessageText = BotApiMethodBuilder.makeEditMessageText(chatId, Math.toIntExact(userEntity.getLastUpdatedTaskMessageId()), task.toString());
+                editMessageText.setText(getTaskInfo(task));
                 editMessageText.setReplyMarkup(getInlineMessageButtons(taskId));
                 return editMessageText;
             }
 
             if (!userAnswer.isEmpty() && userAnswer.startsWith("/subtask")) {
-                long taskId = Long.parseLong(userAnswer.substring("/subtask".length()));
-                EditMessageText editMessageText = BotApiMethodBuilder
-                        .makeEditMessageText(
-                                chatId,
-                                Math.toIntExact(userEntity.getLastUpdatedTaskMessageId()),
-                                "Choose priority"
-                        );
+                long taskId = tryToParseLongPositive(userAnswer.substring("/subtask".length()));
+                editMessageText.setText("Выберите приоритет");
                 editMessageText.setReplyMarkup(TaskCreationHandler.getInlineMessageButtonsPriority(taskId));
                 return editMessageText;
             }
             if (!userAnswer.isEmpty() && checkPriority(userAnswer)) {
-                long taskId = Long.parseLong(userAnswer.substring(userAnswer.indexOf("_") + 1));
-
+                long taskId = tryToParseLongPositive(userAnswer.substring(userAnswer.indexOf("_") + 1));
                 String priority = userAnswer.substring(0, userAnswer.indexOf("_"));
-
                 Task task = taskService.createTask(
                         new Task()
                                 .setUserEntity(userEntity)
@@ -125,8 +112,8 @@ public class TaskListHandler implements MessageHandler {
                 return BotApiMethodBuilder
                         .makeEditMessageText(
                                 chatId,
-                                Math.toIntExact(userEntity.getLastUpdatedTaskMessageId()),
-                                "Give a name#comment"
+                                userEntity.getLastUpdatedTaskMessageId().intValue(),
+                                "Give a name"
                         );
             }
 
@@ -138,8 +125,7 @@ public class TaskListHandler implements MessageHandler {
                 name = userAnswer.substring(0, userAnswer.indexOf("#"));
                 comment = userAnswer.substring(userAnswer.indexOf("#") + 1, userAnswer.length() - 1);
             }
-            task.setName(name)
-                    .setComment(comment);
+            task.setName(name).setComment(comment);
             taskService.createTask(task);
             userEntity.setBotState(BotState.TASK_LIST);
             userEntity.setLastUpdatedTaskId(null);
@@ -154,12 +140,7 @@ public class TaskListHandler implements MessageHandler {
         if (!userAnswer.isEmpty() && userAnswer.startsWith("/generate")) {
             long taskId = Long.parseLong(userAnswer.substring("/generate".length()));
             List<Task> taskList = taskService.generateSubtasksById(taskId);
-            EditMessageText editMessageText = BotApiMethodBuilder
-                    .makeEditMessageText(
-                            chatId,
-                            Math.toIntExact(userEntity.getLastUpdatedTaskMessageId()),
-                            getTaskListInfo(taskList)
-                    );
+            editMessageText.setText(getTaskListInfo(taskList));
             editMessageText.setReplyMarkup(getInlineMessageAcceptButtons(taskId, taskList));
             return editMessageText;
         }
@@ -168,11 +149,11 @@ public class TaskListHandler implements MessageHandler {
                 (userAnswer.startsWith("/accept") || userAnswer.startsWith("/reject"))) {
             long taskId;
             if (userAnswer.startsWith("/accept")) {
-                taskId = Long.parseLong(userAnswer.substring("/accept".length()));
+                taskId = tryToParseLongPositive(userAnswer.substring("/accept".length()));
                 message.setText("/id" + taskId);
                 handle(message, userEntity);
             } else {
-                taskId = Long.parseLong(
+                taskId = tryToParseLongPositive(
                         userAnswer.substring("/reject".length(), userAnswer.indexOf("#"))
                 );
                 String[] subIds = userAnswer
@@ -190,9 +171,9 @@ public class TaskListHandler implements MessageHandler {
             long taskId = Long.parseLong(userAnswer.substring("/getsubs".length()));
             List<Task> taskList = taskService.getChildTasksByTaskId(taskId,
                     PageRequest.of(0, 8, Sort.by("id")));
-            EditMessageText editMessageText = MessageTypeConverter
+            editMessageText = MessageTypeConverter
                     .convertSendToEdit(TaskHandler.getList(taskList, chatId, 0, true));
-            editMessageText.setMessageId(Math.toIntExact(userEntity.getLastUpdatedTaskMessageId()));
+            editMessageText.setMessageId(userEntity.getLastUpdatedTaskMessageId().intValue());
             return editMessageText;
         }
         if (!userAnswer.isEmpty() && (userAnswer.startsWith("/nextsub") || userAnswer.startsWith("/prevsub"))) {
@@ -205,9 +186,9 @@ public class TaskListHandler implements MessageHandler {
                     id,
                     PageRequest.of(page, 8, Sort.by("id")));
 
-            EditMessageText editMessageText = MessageTypeConverter
+            editMessageText = MessageTypeConverter
                     .convertSendToEdit(TaskHandler.getList(taskList, chatId, page, true));
-            editMessageText.setMessageId(Math.toIntExact(userEntity.getLastUpdatedTaskMessageId()));
+            editMessageText.setMessageId(userEntity.getLastUpdatedTaskMessageId().intValue());
             return editMessageText;
         }
         if (!userAnswer.isEmpty() && (userAnswer.startsWith("/next") || userAnswer.startsWith("/prev") ||
@@ -216,6 +197,18 @@ public class TaskListHandler implements MessageHandler {
             return taskHandler.handle(message, userEntity);
         }
         return replyMessage;
+    }
+
+    private long tryToParseLongPositive(String str) {
+        if (str == null) return -1;
+        long num;
+        try {
+            num = Long.parseLong(str);
+            if (num < 0) return -1;
+            return num;
+        } catch (NumberFormatException e) {
+            return -1l;
+        }
     }
 
     private String getTaskInfo(Task task) {
