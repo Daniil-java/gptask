@@ -1,5 +1,6 @@
 package com.education.gptask.telegram;
 
+import com.education.gptask.telegram.configurations.TelegramBotKeyComponent;
 import com.education.gptask.telegram.facades.MessageFacade;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,8 +20,8 @@ public class TelegramBot extends TelegramLongPollingBot {
     @Value("${bot.name}")
     private String botName;
 
-    public TelegramBot(@Value("${bot.token}") String botToken) {
-        super(botToken);
+    public TelegramBot(TelegramBotKeyComponent telegramBotKeyComponent) {
+        super(telegramBotKeyComponent.getKey());
     }
     @Autowired
     private MessageFacade messageFacade;
