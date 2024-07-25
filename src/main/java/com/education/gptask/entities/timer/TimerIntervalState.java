@@ -28,7 +28,7 @@ public enum TimerIntervalState {
         }
     }
 
-    public static String getTimeSpent(Timer timer) {
+    public static String getTextTimerInfo(Timer timer) {
         StringBuilder builder = new StringBuilder();
         if (timer.getInterval() == 0) return "";
 
@@ -44,25 +44,25 @@ public enum TimerIntervalState {
         builder.append("\uD83D\uDCBC <strong>Рабочих интервалов: </strong>").append(workInt).append("\n");
         builder.append("✋ <strong>Коротких перерывов: </strong>").append(shortBreakInt).append("\n");
         builder.append("\uD83D\uDEA7 <strong>Длинных перерывов: </strong>").append(longBreakInt).append("\n");
-        builder.append("\uD83D\uDC68\uD83C\uDFFB\u200D\uD83D\uDCBB <strong>Общее рабочее время:</strong> ").append(getHoursMinutes(workInt * timer.getWorkDuration())).append("\n");
+        builder.append("\uD83D\uDC68\uD83C\uDFFB\u200D\uD83D\uDCBB <strong>Общее рабочее время:</strong> ").append(textFormatTime(workInt * timer.getWorkDuration())).append("\n");
         builder.append("☕ <strong>Общее время перерывов:</strong> ")
-                .append(getHoursMinutes(longBreakInt * timer.getLongBreakDuration() + shortBreakInt * timer.getShortBreakDuration()))
+                .append(textFormatTime(longBreakInt * timer.getLongBreakDuration() + shortBreakInt * timer.getShortBreakDuration()))
                 .append("\n");
 
         return builder.toString();
     }
 
-    public static String getTimeSpentWork(Timer timer) {
+    public static String getTextTimerWorkTime(Timer timer) {
         StringBuilder builder = new StringBuilder();
         int interval = timer.getInterval() + 1;
         int workInt = interval / 2 + interval % 2;
         builder.append("\uD83D\uDC68\uD83C\uDFFB\u200D\uD83D\uDCBB <strong>Общее рабочее время:</strong> ")
-                .append(getHoursMinutes(workInt * timer.getWorkDuration())).append("\n");
+                .append(textFormatTime(workInt * timer.getWorkDuration())).append("\n");
 
         return builder.toString();
     }
 
-    private static String getHoursMinutes(int minutes) {
+    private static String textFormatTime(int minutes) {
         int hours = minutes / 60;
         int min = minutes - hours * 60;
         return String.format("%s ч. %s мин.", hours, min);

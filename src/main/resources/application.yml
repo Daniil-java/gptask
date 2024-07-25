@@ -33,3 +33,6 @@ integrations:
   write-timeout: 5000
   openai-api:
     url: https://api.openai.com/v1/
+
+locale:
+  tag: ru-RU

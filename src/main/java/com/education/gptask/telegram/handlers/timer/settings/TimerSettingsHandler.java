@@ -8,12 +8,13 @@ import com.education.gptask.telegram.TelegramBot;
 import com.education.gptask.telegram.entities.BotState;
 import com.education.gptask.telegram.handlers.MessageHandler;
 import com.education.gptask.telegram.handlers.timer.TimerHandler;
+import com.education.gptask.telegram.services.LocaleMessageService;
+import com.education.gptask.telegram.utils.builders.BotApiMethodBuilder;
+import com.education.gptask.telegram.utils.converters.NumeralConverter;
 import com.education.gptask.telegram.utils.keyboards.InlineKeyboardBuilder;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
-import org.telegram.telegrambots.meta.api.methods.ParseMode;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -31,6 +32,17 @@ public class TimerSettingsHandler implements MessageHandler {
     private final TelegramBot telegramBot;
     private final TimerService timerService;
     private final TimerHandler timerHandler;
+    private final LocaleMessageService localeMessageService;
+    private static final String VALUE_WAITING_MESSAGE = "reply.general.value-waiting";
+    private static final String CLOSE_MESSAGE = "reply.general.close";
+    private static final String WORK_DURATION_MESSAGE = "reply.timer.workDuration";
+    private static final String SHORT_BREAK_DURATION_MESSAGE = "reply.timer.shortBreakDuration";
+    private static final String LONG_BREAK_DURATION_MESSAGE = "reply.timer.longBreakDuration";
+    private static final String LONG_BREAK_INTERVAL_MESSAGE = "reply.timer.longBreakInterval";
+    private static final String IS_AUTOSTART_WORK_MESSAGE = "reply.timer.isAutostartWork";
+    private static final String IS_AUTOSTART_BREAK_MESSAGE = "reply.timer.isAutostartBreak";
+    private static final String CHOICE_MESSAGE = "reply.general.choice";
+    private static final String BACK_COMMAND = "command.timer.back";
 
     @Override
     public BotApiMethod handle(Message message, UserEntity userEntity) {
@@ -38,18 +50,13 @@ public class TimerSettingsHandler implements MessageHandler {
         int messageId = message.getMessageId();
         String userAnswer = message.getText();
         BotState botState = userEntity.getBotState();
-        SendMessage replyMessage = new SendMessage(String.valueOf(chatId),
-                "Что-то пошло не так ¯\\_(ツ)_/¯");
 
-        Timer timer = timerService.getTimersByUserId(userEntity.getId()).get(0);
-        EditMessageText editMessageText = EditMessageText.builder()
-                .chatId(chatId)
-                .messageId(timer.getTelegramMessageId())
-                .text("Введите целое число, больше 0")
-                .parseMode(ParseMode.HTML).build();
+        Timer timer = timerService.getAnyCompleteTimerByUserId(userEntity.getId()).get(0);
+        EditMessageText editMessageText = BotApiMethodBuilder.makeEditMessageText(chatId, messageId,
+                localeMessageService.getMessage(localeMessageService.getMessage(VALUE_WAITING_MESSAGE)));
 
-        if (botState.equals(BotState.TIMER_SETTINGS)) {
-            if (userAnswer.equals("/back")) {
+        if (BotState.TIMER_SETTINGS.equals(botState)) {
+            if (userAnswer.equals(localeMessageService.getMessage(BACK_COMMAND))) {
                 userEntity.setBotState(BotState.TIMER_STATUS);
                 userService.updateUserEntity(userEntity);
                 return timerHandler.handle(message, userEntity);
@@ -59,8 +66,7 @@ public class TimerSettingsHandler implements MessageHandler {
             return editMessageText;
         }
 
-        if (botState.equals(BotState.TIMER_SETTINGS_AUTOSTART_BREAK)
-            || botState.equals(BotState.TIMER_SETTINGS_AUTOSTART_WORK)) {
+        if (Arrays.asList(BotState.TIMER_SETTINGS_AUTOSTART_BREAK, BotState.TIMER_SETTINGS_AUTOSTART_WORK).contains(botState)) {
             if (userAnswer.equals("true") || userAnswer.equals("false")) {
                 if (botState.equals(BotState.TIMER_SETTINGS_AUTOSTART_BREAK)) {
                     timer.setAutostartBreak(Boolean.valueOf(userAnswer));
@@ -68,12 +74,12 @@ public class TimerSettingsHandler implements MessageHandler {
                     timer.setAutostartWork(Boolean.valueOf(userAnswer));
                 }
             } else {
-                editMessageText.setText("Choose value");
+                editMessageText.setText(localeMessageService.getMessage(CHOICE_MESSAGE));
                 editMessageText.setReplyMarkup(InlineKeyboardBuilder.getTrueOrFalseK());
                 return editMessageText;
             }
         } else {
-            int value = tryToParseIntPositive(userAnswer);
+            int value = NumeralConverter.parsePositiveSafelyInt(userAnswer);
             if (value > -1) {
                 switch (botState) {
                     case TIMER_SETTINGS_LBREAK:
@@ -94,7 +100,7 @@ public class TimerSettingsHandler implements MessageHandler {
             }
         }
 
-        if (!botState.equals(BotState.TIMER_SETTINGS)) {
+        if (!BotState.TIMER_SETTINGS.equals(botState)) {
             if (!(botState.equals(BotState.TIMER_SETTINGS_AUTOSTART_WORK) || botState.equals(BotState.TIMER_SETTINGS_AUTOSTART_BREAK))) {
                 DeleteMessage deleteMessage = new DeleteMessage(String.valueOf(chatId), messageId);
                 telegramBot.sendMessage(deleteMessage);
@@ -109,7 +115,7 @@ public class TimerSettingsHandler implements MessageHandler {
             return editMessageText;
         }
 
-        return replyMessage;
+        return BotApiMethodBuilder.makeSendMessage(chatId);
     }
 
     private static String getTimerSettingsInfo(Timer timer) {
@@ -133,28 +139,16 @@ public class TimerSettingsHandler implements MessageHandler {
         return stringBuilder.toString();
     }
 
-    private int tryToParseIntPositive(String str) {
-        if (str == null) return -1;
-        int integer;
-        try {
-            integer = Integer.parseInt(str);
-            if (integer < 0) return -1;
-            return integer;
-        } catch (NumberFormatException e) {
-            return -1;
-        }
-    }
-
     private InlineKeyboardMarkup getInlineMessageButtons() {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
 
-        InlineKeyboardButton workDuration = new InlineKeyboardButton("Рабочее время");
-        InlineKeyboardButton shortBreakDuration = new InlineKeyboardButton("Время короткой паузы");
-        InlineKeyboardButton longBreakDuration = new InlineKeyboardButton("Время длинной паузы");
-        InlineKeyboardButton longBreakInterval = new InlineKeyboardButton("Интервал длинной паузы");
-        InlineKeyboardButton isAutostartWork = new InlineKeyboardButton("Автостарт таймера работы");
-        InlineKeyboardButton isAutostartBreak = new InlineKeyboardButton("Автостарт таймера паузы");
-        InlineKeyboardButton closeButton = new InlineKeyboardButton("Закрыть");
+        InlineKeyboardButton workDuration = new InlineKeyboardButton(localeMessageService.getMessage(WORK_DURATION_MESSAGE));
+        InlineKeyboardButton shortBreakDuration = new InlineKeyboardButton(localeMessageService.getMessage(SHORT_BREAK_DURATION_MESSAGE));
+        InlineKeyboardButton longBreakDuration = new InlineKeyboardButton(localeMessageService.getMessage(LONG_BREAK_DURATION_MESSAGE));
+        InlineKeyboardButton longBreakInterval = new InlineKeyboardButton(localeMessageService.getMessage(LONG_BREAK_INTERVAL_MESSAGE));
+        InlineKeyboardButton isAutostartWork = new InlineKeyboardButton(localeMessageService.getMessage(IS_AUTOSTART_WORK_MESSAGE));
+        InlineKeyboardButton isAutostartBreak = new InlineKeyboardButton(localeMessageService.getMessage(IS_AUTOSTART_BREAK_MESSAGE));
+        InlineKeyboardButton closeButton = new InlineKeyboardButton(localeMessageService.getMessage(CLOSE_MESSAGE));
 
         workDuration.setCallbackData(BotState.TIMER_SETTINGS_WORK.getCommand());
         shortBreakDuration.setCallbackData(BotState.TIMER_SETTINGS_SBREAK.getCommand());
@@ -162,7 +156,7 @@ public class TimerSettingsHandler implements MessageHandler {
         longBreakInterval.setCallbackData(BotState.TIMER_SETTINGS_LBREAK_INTERVAL.getCommand());
         isAutostartWork.setCallbackData(BotState.TIMER_SETTINGS_AUTOSTART_WORK.getCommand());
         isAutostartBreak.setCallbackData(BotState.TIMER_SETTINGS_AUTOSTART_BREAK.getCommand());
-        closeButton.setCallbackData("/back");
+        closeButton.setCallbackData(BACK_COMMAND);
 
         List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
         rowList.add(Arrays.asList(workDuration));

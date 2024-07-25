@@ -11,11 +11,11 @@ import com.education.gptask.services.TimerService;
 import com.education.gptask.telegram.TelegramBot;
 import com.education.gptask.telegram.entities.BotState;
 import com.education.gptask.telegram.handlers.MessageHandler;
+import com.education.gptask.telegram.utils.builders.BotApiMethodBuilder;
 import com.education.gptask.telegram.utils.converters.MessageTypeConverter;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
-import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
@@ -47,15 +47,12 @@ public class TimerHandler implements MessageHandler {
         }
 
         String messageText = getTimerInfo(timer, taskList);
-        EditMessageText editMessageText = EditMessageText.builder()
-                .chatId(chatId)
-                .messageId(timer.getTelegramMessageId())
-                .text(messageText)
-                .replyMarkup(getInlineMessageTimerStatusButtons(timer.getStatus()))
-                .parseMode(ParseMode.HTML).build();
+        EditMessageText editMessageText = BotApiMethodBuilder
+                .makeEditMessageText(chatId, timer.getTelegramMessageId(), messageText, getInlineMessageTimerStatusButtons(timer.getStatus()));
+
         SendMessage replyMessage = MessageTypeConverter.convertEditToSend(editMessageText);
 
-        if (botState.equals(BotState.TIMER)) {
+        if (BotState.TIMER.equals(botState)) {
             if (timer.getTelegramMessageId() != 0) {
                 DeleteMessage deleteMessage =
                         new DeleteMessage(String.valueOf(chatId), timer.getTelegramMessageId());
@@ -63,10 +60,10 @@ public class TimerHandler implements MessageHandler {
             }
             DeleteMessage deleteMessage = new DeleteMessage(String.valueOf(chatId), messageId);
             telegramBot.sendMessage(deleteMessage);
-            timerService.getTimersByUserId(userEntity.getId(), telegramBot.sendReturnedMessage(replyMessage).getMessageId());
+            timerService.setMessageIdToAnyCompleteTimerByUserId(userEntity.getId(), telegramBot.sendReturnedMessage(replyMessage).getMessageId());
         }
 
-        if (botState.equals(BotState.TIMER_START) || botState.equals(BotState.TIMER_PAUSE) || botState.equals(BotState.TIMER_STOP)) {
+        if (Arrays.asList(BotState.TIMER_START, BotState.TIMER_PAUSE, BotState.TIMER_STOP).contains(botState)) {
             TimerStatus timerStatus = TimerStatus.PAUSED;
             if (botState == BotState.TIMER_START) {
                 timerStatus = TimerStatus.RUNNING;
@@ -96,7 +93,7 @@ public class TimerHandler implements MessageHandler {
 
         stringBuilder.append("\uD83D\uDEA5 <strong>Интервал: </strong>").append((timer.getInterval() / 2) + 1);
         stringBuilder.append("\n");
-        stringBuilder.append(TimerIntervalState.getTimeSpentWork(timer));
+        stringBuilder.append(TimerIntervalState.getTextTimerWorkTime(timer));
         stringBuilder.append("⌛ <strong>").append(TimerIntervalState.getTimerState(timer).getState()).append("</strong>");
         stringBuilder.append("\n");
         if (timer.getStatus().equals(TimerStatus.PAUSED)) {

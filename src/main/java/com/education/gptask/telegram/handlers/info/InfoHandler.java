@@ -9,6 +9,7 @@ import com.education.gptask.services.TimerService;
 import com.education.gptask.telegram.TelegramBot;
 import com.education.gptask.telegram.entities.BotState;
 import com.education.gptask.telegram.handlers.MessageHandler;
+import com.education.gptask.telegram.utils.ThreadUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -42,7 +43,7 @@ public class InfoHandler implements MessageHandler {
 
         telegramBot.sendMessage(new DeleteMessage(chatId, messageId));
 
-        if (botState.equals(BotState.INFO)) {
+        if (BotState.INFO.equals(botState)) {
             if (userAnswer != null && userAnswer.startsWith("/info_close")) {
                 int msgId = Integer.parseInt(userAnswer.substring("/info_close".length()));
                 return new DeleteMessage(chatId, msgId);
@@ -58,14 +59,9 @@ public class InfoHandler implements MessageHandler {
                 sendMessage.setReplyMarkup(getInlineMessageButtons(timer.getId()));
                 sendMessage.enableMarkdown(true);
                 sendMessage.setParseMode(ParseMode.HTML);
-                Message returnedMsg = telegramBot.sendReturnedMessage(sendMessage);
+                telegramBot.sendMessage(sendMessage);
 
-                timer.setTelegramMessageId(returnedMsg.getMessageId());
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    log.error("Info Handler Error");
-                }
+                ThreadUtil.sleep(200, "Info Handler Error");
 
             }
 
@@ -83,7 +79,7 @@ public class InfoHandler implements MessageHandler {
             builder.append(t.getCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
 
             builder.append("\n");
-            builder.append(TimerIntervalState.getTimeSpent(t));
+            builder.append(TimerIntervalState.getTextTimerInfo(t));
             builder.append("\n");
             builder.append("\uD83D\uDCCB <strong>Задачи: </strong>").append("\n");
             if (!t.getTasks().isEmpty()) {
@@ -107,7 +103,7 @@ public class InfoHandler implements MessageHandler {
         builder.append("\uD83D\uDCC5 <strong>Дата: </strong>");
         builder.append(timer.getCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
         builder.append("\n");
-        builder.append(TimerIntervalState.getTimeSpent(timer));
+        builder.append(TimerIntervalState.getTextTimerInfo(timer));
         builder.append("\n");
         builder.append("\uD83D\uDCCB <strong>Задачи: </strong>");
         builder.append("\n");

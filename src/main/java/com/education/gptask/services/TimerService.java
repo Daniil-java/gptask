@@ -33,17 +33,17 @@ public class TimerService {
     private final TimerMapper timerMapper;
 
     public List<TimerDto> getTimersDtoByUserId(Long userId) {
-        return timerMapper.entityListToDtoList(getTimersByUserId(userId));
+        return timerMapper.entityListToDtoList(getAnyCompleteTimerByUserId(userId));
     }
 
-    public List<Timer> getTimersByUserId(Long userId) {
+    public List<Timer> getAnyCompleteTimerByUserId(Long userId) {
         return timerRepository.findTimersByUserEntityIdAndStatusNot(userId, TimerStatus.COMPLETE)
                 .orElseThrow(() -> new ErrorResponseException(ErrorStatus.TIMER_ERROR));
     }
     public List<Timer> getOrCreateTimerByUserId(long userId) {
-        return getTimersByUserId(userId, 0);
+        return setMessageIdToAnyCompleteTimerByUserId(userId, 0);
     }
-    public List<Timer> getTimersByUserId(Long userId, int messageId) {
+    public List<Timer> setMessageIdToAnyCompleteTimerByUserId(Long userId, int messageId) {
         Optional<List<Timer>> timers = timerRepository
                 .findTimersByUserEntityIdAndStatusNot(userId, TimerStatus.COMPLETE);
         if (timers.isPresent() && !timers.get().isEmpty()) {
@@ -80,7 +80,7 @@ public class TimerService {
     }
 
     public Timer updateTimer(Timer timer) {
-        if (timer.getId() == null || (timer.getStatus() != null && timer.getStatus().equals(TimerStatus.COMPLETE))) {
+        if (timer.getId() == null || TimerStatus.COMPLETE.equals(timer.getStatus())) {
             throw new ErrorResponseException(ErrorStatus.TIMER_UPDATE_ERROR);
         }
         return timerRepository.save(timer);
