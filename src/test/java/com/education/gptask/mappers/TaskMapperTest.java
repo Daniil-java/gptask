@@ -71,7 +71,6 @@ class TaskMapperTest {
                 .setPriority(Priority.MUST)
                 .setStatus(Status.DONE)
                 .setUser(USER_DTO)
-                .setParent(new TaskDto().setId(1L))
                 .setChildTasks(taskDtoList);
         Task task = taskMapper.dtoToEntity(taskDto);
 
