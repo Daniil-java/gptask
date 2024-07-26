@@ -24,5 +24,5 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findAllByTimerId(@Param("timerId") Long timerId);
 
     @Query("SELECT t FROM Task t WHERE t.userEntity.id = :userId and t.parent is null and t.status <> 'DONE'")
-    List<Task> findAllNotDoneByUserEntityIdAndParentIsNull(long userId, Pageable pageable);
+    List<Task> findAllNotDoneByUserEntityIdAndParentIsNull(@Param("userId") long userId, Pageable pageable);
 }
