@@ -7,18 +7,19 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 public class MessageTypeConverter {
 
     public static SendMessage convertEditToSend(EditMessageText editMessageText) {
-        SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(editMessageText.getChatId());
-        sendMessage.setText(editMessageText.getText());
-        sendMessage.setReplyMarkup(editMessageText.getReplyMarkup());
-
-        return sendMessage;
+        return SendMessage.builder()
+                .chatId(editMessageText.getChatId())
+                .text(editMessageText.getText())
+                .replyMarkup(editMessageText.getReplyMarkup())
+                .parseMode(editMessageText.getParseMode())
+                .build();
     }
 
     public static EditMessageText convertSendToEdit(SendMessage sendMessage) {
-        EditMessageText editMessageText = new EditMessageText();
-        editMessageText.setChatId(sendMessage.getChatId());
-        editMessageText.setText(sendMessage.getText());
+        EditMessageText editMessageText =EditMessageText.builder()
+                .chatId(sendMessage.getChatId())
+                .text(sendMessage.getText())
+                .parseMode(sendMessage.getParseMode()).build();
         if (sendMessage.getReplyMarkup() instanceof InlineKeyboardMarkup) {
             editMessageText.setReplyMarkup((InlineKeyboardMarkup) sendMessage.getReplyMarkup());
         }

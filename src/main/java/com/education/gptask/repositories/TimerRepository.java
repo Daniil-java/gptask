@@ -1,6 +1,7 @@
 package com.education.gptask.repositories;
 
 import com.education.gptask.entities.timer.Timer;
+import com.education.gptask.entities.timer.TimerStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -15,14 +16,12 @@ import java.util.Optional;
 
 @Repository
 public interface TimerRepository extends JpaRepository<Timer, Long> {
-
-    Optional<List<Timer>> findTimersByUserEntityId(Long userId);
-
+    Optional<List<Timer>> findTimersByUserEntityIdAndStatusNot(Long userId, TimerStatus status);
     @EntityGraph(attributePaths = {"tasks"})
     Optional<Timer> findById(Long id);
 
-    @Query("SELECT t FROM Timer t WHERE t.stopTime < :currentTime AND t.status = 'RUNNING'")
-    Optional<List<Timer>> findAllExpired(@Param("currentTime") LocalDateTime currentTime);
+    @Query("SELECT t FROM Timer t WHERE t.stopTime < :currentTime AND t.status = 'RUNNING' AND t.status <> 'COMPLETE'")
+    Optional<List<Timer>> findAllExpiredAndNotComplete(@Param("currentTime") LocalDateTime currentTime);
 
     @Modifying
     @Query("UPDATE Timer t SET t.status = 'PENDING' WHERE t.id IN :ids")
@@ -32,4 +31,6 @@ public interface TimerRepository extends JpaRepository<Timer, Long> {
     @Transactional
     @Query("UPDATE Timer t SET t.interval = 0 WHERE t.id = :id")
     void resetIntervalById(Long id);
+
+    List<Timer> findTimersByUserEntityIdAndCreatedAfter(Long userId, LocalDateTime localDateTime);
 }

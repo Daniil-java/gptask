@@ -122,6 +122,10 @@ public class TaskService {
         return taskRepository.findAllByUserEntityIdAndParentIsNull(userId, paging);
     }
 
+    public List<Task> getParentDoneTasksByUserId(long userId, Pageable paging) {
+        return taskRepository.findAllNotDoneByUserEntityIdAndParentIsNull(userId, paging);
+    }
+
     public List<Task> getChildTasksByTaskId(long taskId, Pageable paging) {
         return taskRepository.findAllByParentId(taskId, paging);
     }

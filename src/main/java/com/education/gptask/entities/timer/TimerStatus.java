@@ -9,5 +9,6 @@ public enum TimerStatus {
     PENDING,
     RUNNING,
     PAUSED,
-    STOPPED
+    STOPPED,
+    COMPLETE
 }

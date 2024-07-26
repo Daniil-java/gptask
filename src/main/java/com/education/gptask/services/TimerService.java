@@ -33,18 +33,19 @@ public class TimerService {
     private final TimerMapper timerMapper;
 
     public List<TimerDto> getTimersDtoByUserId(Long userId) {
-        return timerMapper.entityListToDtoList(getTimersByUserId(userId));
+        return timerMapper.entityListToDtoList(getAnyCompleteTimerByUserId(userId));
     }
 
-    public List<Timer> getTimersByUserId(Long userId) {
-        return timerRepository.findTimersByUserEntityId(userId)
+    public List<Timer> getAnyCompleteTimerByUserId(Long userId) {
+        return timerRepository.findTimersByUserEntityIdAndStatusNot(userId, TimerStatus.COMPLETE)
                 .orElseThrow(() -> new ErrorResponseException(ErrorStatus.TIMER_ERROR));
     }
     public List<Timer> getOrCreateTimerByUserId(long userId) {
-        return getTimersByUserId(userId, 0);
+        return setMessageIdToAnyCompleteTimerByUserId(userId, 0);
     }
-    public List<Timer> getTimersByUserId(Long userId, int messageId) {
-        Optional<List<Timer>> timers = timerRepository.findTimersByUserEntityId(userId);
+    public List<Timer> setMessageIdToAnyCompleteTimerByUserId(Long userId, int messageId) {
+        Optional<List<Timer>> timers = timerRepository
+                .findTimersByUserEntityIdAndStatusNot(userId, TimerStatus.COMPLETE);
         if (timers.isPresent() && !timers.get().isEmpty()) {
             if (messageId != 0) timers.get().get(0).setTelegramMessageId(messageId);
             return timerRepository.saveAll(timers.get());
@@ -54,10 +55,6 @@ public class TimerService {
             timerList.add(new Timer().setUserEntity(user).setStatus(TimerStatus.PENDING));
             return timerRepository.saveAll(timerList);
         }
-    }
-
-    public void resetIntervalById(Long timerId) {
-        timerRepository.resetIntervalById(timerId);
     }
 
     public TimerDto getTimerDtoById(Long timerId) {
@@ -70,8 +67,11 @@ public class TimerService {
     }
 
     public TimerDto createTimer(TimerDto timerDto) {
+        if (timerDto.getUser() == null || timerDto.getUser().getId() == null) {
+            throw new ErrorResponseException(ErrorStatus.TIMER_CREATION_ERROR);
+        }
         return timerMapper.entityToDto(
-                timerRepository.save(timerMapper.dtoToEntity(timerDto))
+                getOrCreateTimerByUserId(timerDto.getUser().getId()).get(0)
         );
     }
 
@@ -80,7 +80,7 @@ public class TimerService {
     }
 
     public Timer updateTimer(Timer timer) {
-        if (timer.getId() == null) {
+        if (timer.getId() == null || TimerStatus.COMPLETE.equals(timer.getStatus())) {
             throw new ErrorResponseException(ErrorStatus.TIMER_UPDATE_ERROR);
         }
         return timerRepository.save(timer);
@@ -99,7 +99,7 @@ public class TimerService {
      */
     @Transactional
     public List<Timer> getExpiredTimersAndUpdate() {
-        Optional<List<Timer>> expiredTimers = timerRepository.findAllExpired(LocalDateTime.now());
+        Optional<List<Timer>> expiredTimers = timerRepository.findAllExpiredAndNotComplete(LocalDateTime.now());
         if (!expiredTimers.isPresent()) return null;
 
         List<Timer> timers = expiredTimers.get();
@@ -185,6 +185,9 @@ public class TimerService {
     @Transactional
     public Timer updateTimerStatus(Long timerId, String status) {
         Timer timer = getTimerById(timerId);
+        if (timer.getStatus().equals(TimerStatus.COMPLETE)) {
+            throw new ErrorResponseException(ErrorStatus.TIMER_ERROR);
+        }
         timer.setStatus(TimerStatus.valueOf(status));
         LocalDateTime stopTime = LocalDateTime.now();
         switch (TimerStatus.valueOf(status)) {
@@ -215,5 +218,9 @@ public class TimerService {
                 break;
         }
         return timerRepository.save(timer);
+    }
+
+    public List<Timer> getCompletedTimersByUserIdAndCreatedAfterDate(long userId, LocalDateTime localDate) {
+        return timerRepository.findTimersByUserEntityIdAndCreatedAfter(userId, localDate);
     }
 }
