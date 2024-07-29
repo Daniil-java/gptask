@@ -52,7 +52,7 @@ public class TimerSettingsHandler implements MessageHandler {
         BotState botState = userEntity.getBotState();
 
         Timer timer = timerService.getAnyCompleteTimerByUserId(userEntity.getId()).get(0);
-        EditMessageText editMessageText = BotApiMethodBuilder.makeEditMessageText(chatId, messageId,
+        EditMessageText editMessageText = BotApiMethodBuilder.makeEditMessageText(chatId, timer.getTelegramMessageId(),
                 localeMessageService.getMessage(VALUE_WAITING_MESSAGE));
 
         if (BotState.TIMER_SETTINGS.equals(botState)) {
