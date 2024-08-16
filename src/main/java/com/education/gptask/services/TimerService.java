@@ -33,10 +33,10 @@ public class TimerService {
     private final TimerMapper timerMapper;
 
     public List<TimerDto> getTimersDtoByUserId(Long userId) {
-        return timerMapper.entityListToDtoList(getAnyCompleteTimerByUserId(userId));
+        return timerMapper.entityListToDtoList(timerRepository.findAllByUserEntityIdAndStatus(userId, TimerStatus.COMPLETE));
     }
 
-    public List<Timer> getAnyCompleteTimerByUserId(Long userId) {
+    public List<Timer> getAnyNotCompleteTimerByUserId(Long userId) {
         return timerRepository.findTimersByUserEntityIdAndStatusNot(userId, TimerStatus.COMPLETE)
                 .orElseThrow(() -> new ErrorResponseException(ErrorStatus.TIMER_ERROR));
     }
@@ -222,5 +222,10 @@ public class TimerService {
 
     public List<Timer> getCompletedTimersByUserIdAndCreatedAfterDate(long userId, LocalDateTime localDate) {
         return timerRepository.findTimersByUserEntityIdAndCreatedAfter(userId, localDate);
+    }
+
+    public TimerDto saveTimerFromFront(TimerDto timerDto) {
+        timerDto.setStatus(TimerStatus.COMPLETE);
+        return timerMapper.entityToDto(timerRepository.save(timerMapper.dtoToEntity(timerDto)));
     }
 }

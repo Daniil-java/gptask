@@ -33,4 +33,6 @@ public interface TimerRepository extends JpaRepository<Timer, Long> {
     void resetIntervalById(Long id);
 
     List<Timer> findTimersByUserEntityIdAndCreatedAfter(Long userId, LocalDateTime localDateTime);
+
+    List<Timer> findAllByUserEntityIdAndStatus(Long userId, TimerStatus status);
 }

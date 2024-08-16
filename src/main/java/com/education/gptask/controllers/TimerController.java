@@ -12,6 +12,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/timer")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:63342")
 public class TimerController {
     private final TimerService timerService;
 
@@ -58,5 +59,10 @@ public class TimerController {
     @DeleteMapping("/{timerId}/tasks/")
     public TimerDto unbindAllTaskToTimer(@PathVariable Long timerId) {
         return timerService.unbindAllTasksFromTimer(timerId);
+    }
+
+    @PostMapping("/save")
+    public TimerDto saveTimerFromFront(@RequestBody TimerDto timerDto) {
+        return timerService.saveTimerFromFront(timerDto);
     }
 }

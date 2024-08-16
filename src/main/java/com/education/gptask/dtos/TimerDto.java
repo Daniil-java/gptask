@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 @Data
 @Accessors(chain = true)
@@ -20,4 +21,6 @@ public class TimerDto {
     private int longBreakInterval;
     private boolean isAutostartWork;
     private boolean isAutostartBreak;
+    private int interval;
+    private LocalDateTime created;
 }

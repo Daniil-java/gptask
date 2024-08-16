@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Помидоро</title>
+    <style>
+        :root {
+            --primary-color: #FF6347;
+            --secondary-color: #e67e22;
+            background-color: #FADBD8;
+            /*--primary-color: #f1c40f;*/
+            /*--secondary-color: #2ecc71;*/
+            /*--background-color: #ecf0f1;*/
+            --text-color: #34495e;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.5s ease;
+        }
+        body.work-mode {
+            --primary-color: #FF6347;
+            --secondary-color: #e67e22;
+            /*--primary-color: #f1c40f;*/
+            /*--secondary-color: #e67e22;*/
+            background-color: #FADBD8;
+        }
+        body.shortBreak-mode {
+            --primary-color: #f1c40f;
+            --secondary-color: #2980b9;
+            /*--primary-color: #3498db;*/
+            /*--secondary-color: #2980b9;*/
+            background-color: #FCF3CF;
+        }
+        body.longBreak-mode {
+            /*FFB6C1*/
+            --primary-color: #EB5284;
+            --secondary-color: #27ae60;
+            /*--primary-color: #2ecc71;*/
+            /*--secondary-color: #27ae60;*/
+            background-color: #FFF0F5;
+        }
+        header {
+            background-color: var(--primary-color);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #FFFAFA;
+        }
+        .header-buttons button {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 1rem;
+            color: #FFFAFA;
+        }
+        .container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+        .white-area {
+            background-color: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            margin-top: 1rem;
+        }
+        .timer-modes {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        .timer-mode {
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+        .timer-mode.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .timer-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+        }
+        #timer {
+            font-size: 5rem;
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+        }
+        #timerCircle circle:nth-child(2){
+            stroke: var(--primary-color);
+            transition: stroke 0.5s ease;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .button-group {
+            position: absolute;
+            bottom: 25%;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1rem;
+            z-index: 2;
+        }
+        button {
+            font-size: 1rem;
+            padding: 0.7rem 1.2rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: var(--primary-color);
+            color: white;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        #taskList {
+            width: 100%;
+        }
+        .task-input-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        #taskInput {
+            flex-grow: 1;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        #prioritySelect {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-family: 'Arial', sans-serif;
+            font-size: 1rem;
+            color: #333;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        #prioritySelect:hover {
+            border-color: #aaa;
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        #prioritySelect:focus {
+            border-color: #007BFF;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+        }
+        /*#prioritySelect {*/
+        /*    padding: 0.5rem;*/
+        /*    border: 1px solid #ddd;*/
+        /*    border-radius: 5px;*/
+        /*}*/
+        #addTaskBtn {
+            padding: 0.5rem 1rem;
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+        #tasks {
+            list-style-type: none;
+            padding: 0;
+        }
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.7rem;
+            margin: 0.5rem 0;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        .task-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .task-priority {
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+        .priority-M { color: #e74c3c; }
+        .priority-S { color: #f39c12; }
+        .priority-C { color: #3498db; }
+        .priority-W { color: #9b59b6; }
+        .task-item.completed span {
+            text-decoration: line-through;
+            color: #888;
+        }
+        .task-actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0 0.3rem;
+            color: var(--text-color);
+        }
+        .task-actions button:hover {
+            color: var(--secondary-color);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modalContent {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            /*background-color: #fefefe;*/
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            /*border-radius: 10px;*/
+            z-index: 1001;
+            position: relative;
+        }
+        #historyList {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+            /*max-height: 300px;*/
+            /*overflow-y: auto;*/
+        }
+        #historyList h3 {
+            color: var(--primary-color);
+            border-bottom: 1px solid var(--primary-color);
+            padding-bottom: 5px;
+        }
+
+        #historyList ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        #historyList li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="logo">🍅 Помидоро</div>
+    <div class="header-buttons">
+        <button id="historyBtn">История</button>
+        <button id="settingsBtn">Настройки</button>
+    </div>
+</header>
+<div class="container">
+    <div class="white-area">
+        <div class="timer-modes">
+            <div class="timer-mode" data-mode="shortBreak">Короткий перерыв</div>
+            <div class="timer-mode active" data-mode="work">Рабочее время</div>
+            <div class="timer-mode" data-mode="longBreak">Длинный перерыв</div>
+        </div>
+        <div class="timer-container">
+            <svg id="timerCircle" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="#ddd" stroke-width="10"/>
+                <circle cx="50" cy="50" r="45" fill="none" stroke="#f1c40f" stroke-width="10"
+                        stroke-dasharray="283" stroke-dashoffset="283" transform="rotate(-90 50 50)"/>
+            </svg>
+            <div id="timer">25:00</div>
+            <div class="button-group">
+                <button id="startPauseBtn">▶</button>
+                <button id="resetBtn">◼</button>
+            </div>
+        </div>
+
+    </div>
+    <div class="white-area">
+        <div id="taskList">
+            <h2>Задачи</h2>
+            <div class="task-input-group">
+                <select id="prioritySelect">
+                    <option value="M">MUST</option>
+                    <option value="S">SHOULD</option>
+                    <option value="C">COULD</option>
+                    <option value="W">WOULD</option>
+                </select>
+                <input type="text" id="taskInput" placeholder="Добавить задачу">
+                <button id="addTaskBtn">+</button>
+            </div>
+            <ul id="tasks"></ul>
+        </div>
+    </div>
+</div>
+
+<div id="settingsModal" class="modal">
+    <div class="modalContent">
+        <h2>Настройки таймера</h2>
+        <label>Рабочее время (мин): <input type="number" id="workTime" value="25"></label><br><br>
+        <label>Время перерыва (мин): <input type="number" id="shortBreakTime" value="5"></label><br><br>
+        <label>Время длинного перерыва (мин): <input type="number" id="longBreakTime" value="15"></label><br><br>
+        <label>Интервал длинной паузы: <input type="number" id="longBreakInterval" value="4"></label><br><br>
+        <button id="saveSettingsBtn">Сохранить</button>
+        <button id="closeSettingsBtn">Закрыть</button>
+    </div>
+</div>
+
+<div id="historyModal" class="modal">
+    <div class="modalContent">
+        <h2>История таймеров</h2>
+        <div id="historyList"></div>
+        <button id="closeHistoryBtn">Закрыть</button>
+    </div>
+</div>
+
+<script>
+    let timer;
+    let timeLeft = 1500; // 25 минут в секундах
+    let isRunning = false;
+    let currentMode = 'work';
+    let cycleCount = 0;
+    let workTime = 0;
+    let breakTime = 0;
+    let currentTasks = [];
+    let history = [];
+
+    const timerDisplay = document.getElementById('timer');
+    const timerCircle = document.querySelector('#timerCircle circle:nth-child(2)');
+    const startPauseBtn = document.getElementById('startPauseBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const historyBtn = document.getElementById('historyBtn');
+    const taskInput = document.getElementById('taskInput');
+    const prioritySelect = document.getElementById('prioritySelect');
+    const addTaskBtn = document.getElementById('addTaskBtn');
+    const taskList = document.getElementById('tasks');
+    const settingsModal = document.getElementById('settingsModal');
+    const historyModal = document.getElementById('historyModal');
+    const historyList = document.getElementById('historyList');
+    const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+    const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+    const closeHistoryBtn = document.getElementById('closeHistoryBtn');
+    const timerModes = document.querySelectorAll('.timer-mode');
+
+    let settings = {
+        workTime: 25,
+        shortBreakTime: 5,
+        longBreakTime: 15,
+        longBreakInterval: 4
+    };
+
+    function updateDisplay() {
+        let minutes = Math.floor(timeLeft / 60);
+        let seconds = timeLeft % 60;
+        timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        updateTimerCircle();
+    }
+
+    function updateTimerCircle() {
+        const totalTime = getCurrentModeTime() * 60;
+        const dashOffset = 283 * (1 - timeLeft / totalTime);
+        timerCircle.style.strokeDashoffset = dashOffset;
+    }
+
+    function getCurrentModeTime() {
+        switch(currentMode) {
+            case 'work':
+                return settings.workTime;
+            case 'shortBreak':
+                return settings.shortBreakTime;
+            case 'longBreak':
+                return settings.longBreakTime;
+        }
+    }
+
+    function startPauseTimer() {
+        if (!isRunning) {
+            startTimer();
+            startPauseBtn.textContent = '❚❚';
+        } else {
+            pauseTimer();
+            startPauseBtn.textContent = '▶';
+        }
+        saveState();
+    }
+
+    function startTimer() {
+        isRunning = true;
+        timer = setInterval(() => {
+            timeLeft--;
+            updateDisplay();
+            if (currentMode === 'work') {
+                workTime++;
+            } else {
+                breakTime++;
+            }
+            if (timeLeft === 0) {
+                clearInterval(timer);
+                isRunning = false;
+                cycleCount++;
+                switchMode();
+            }
+        }, 1000);
+        saveState();
+    }
+
+    function pauseTimer() {
+        clearInterval(timer);
+        isRunning = false;
+        saveState();
+    }
+
+    function resetTimer() {
+        clearInterval(timer);
+        isRunning = false;
+        addToHistory();
+        setMode('work');
+        cycleCount = 0;
+        workTime = 0;
+        breakTime = 0;
+        updateDisplay();
+        startPauseBtn.textContent = '▶';
+        saveState();
+    }
+
+    function setMode(mode) {
+        currentMode = mode;
+        timeLeft = settings[`${mode}Time`] * 60;
+        updateDisplay();
+        timerModes.forEach(modeElement => {
+            modeElement.classList.toggle('active', modeElement.dataset.mode === mode);
+        });
+        document.body.className = `${mode}-mode`;
+    }
+
+    function switchMode() {
+        if (currentMode === 'work') {
+            if (cycleCount % settings.longBreakInterval === 0) {
+                setMode('longBreak');
+            } else {
+                setMode('shortBreak');
+            }
+        } else {
+            setMode('work');
+        }
+        playNotificationSound();
+        saveState();
+    }
+
+    function addToHistory() {
+        const historyEntry = {
+            date: new Date().toLocaleString(),
+            workTime: formatTime(workTime),
+            breakTime: formatTime(breakTime),
+            tasks: [...currentTasks]
+        };
+        history.push(historyEntry);
+        saveTimer();
+        updateHistoryDisplay();
+        saveState();
+    }
+
+    function saveTimer() {
+        const timerData = {
+            tasks: currentTasks.map(task => ({
+                name: task.text,
+                priority: mapPriority(task.priority),
+                status: "DONE",
+                user: {
+                    id: 1
+                }
+            })),
+            user: {
+                id: 1
+            },
+            workDuration: workTime/60,
+            shortBreakDuration: breakTime/60,
+            interval: 1,
+            created: new Date()
+        };
+
+        fetch('http://localhost:8114/api/v1/timer/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(timerData)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                currentTasks.length = 0;
+                updateTaskList();
+                console.log('Timer saved:', data);
+            })
+            .catch(error => {
+                console.error('Error saving timer:', error);
+            });
+    }
+
+    function mapPriority(priority) {
+        if (priority === "M") {
+            return "MUST";
+        } else if (priority === "S") {
+            return "SHOULD";
+        } else if (priority === "C") {
+            return "COULD";
+        } else if (priority === "W") {
+            return "WOULD";
+        }
+    }
+
+    function mapPriorityReverse(priority) {
+        if (priority === "MUST") {
+            return "M";
+        } else if (priority === "SHOULD") {
+            return "S";
+        } else if (priority === "COULD") {
+            return "C";
+        } else if (priority === "WOULD") {
+            return "W";
+        }
+    }
+
+    function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+
+    async function updateHistoryDisplay() {
+        const userId = 1; // Замените на ID пользователя
+        try {
+            const response = await fetch(`http://localhost:8114/api/v1/timer?userId=${userId}`);
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const history = await response.json();
+
+            historyList.innerHTML = '';
+            history.forEach((entry, index) => {
+                const interval = entry.interval + 1;
+                const workInt = Math.floor(interval / 2) + (interval % 2);
+                const breakInt = interval - workInt;
+
+                let longBreakInt = 0;
+                let shortBreakInt = breakInt;
+
+                if (entry.longBreakInterval && entry.longBreakInterval > 0) {
+                    longBreakInt = Math.floor(breakInt / entry.longBreakInterval);
+                    shortBreakInt = breakInt - longBreakInt;
+                }
+
+                const workTime = workInt * entry.workDuration;
+                const shortBreakTime = shortBreakInt * entry.shortBreakDuration;
+                const longBreakTime = longBreakInt * entry.longBreakDuration;
+                const breakTime = shortBreakTime + longBreakTime;
+
+                const date = new Date(entry.created);
+                const formattedDate = `${date.toLocaleDateString('ru-RU')} ${date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}`;
+
+                const entryElement = document.createElement('div');
+                const tasksListHtml = Array.from(entry.tasks).map(task =>
+                    `<li><span class="priority-${mapPriorityReverse(task.priority)}">${mapPriorityReverse(task.priority)}</span> - ${task.name}</li>`
+                ).join('');
+                entryElement.innerHTML = `
+                <h3>${formattedDate}</h3>
+                <p>Время работы: ${workTime} минут</p>
+                <p>Время перерыва: ${breakTime}  минут</p>
+                ${tasksListHtml ? `<h4>Задачи:</h4><ul>${tasksListHtml}</ul>` : ''}
+                <hr>
+            `;
+                historyList.appendChild(entryElement);
+            });
+        } catch (error) {
+            console.error('Error fetching history:', error);
+        }
+    }
+
+    function addTask(text, priority) {
+        const task = { text, priority, completed: false };
+        currentTasks.push(task);
+        updateTaskList();
+        saveState();
+
+    }
+
+    function updateTaskList() {
+        taskList.innerHTML = '';
+        currentTasks.forEach((task, index) => {
+            const li = document.createElement('li');
+            li.className = 'task-item' + (task.completed ? ' completed' : '');
+            li.innerHTML = `
+                    <span>
+                        <span class="task-priority priority-${task.priority}">${task.priority}</span>
+                        ${task.text}
+                    </span>
+                    <div class="task-actions">
+                        <button class="complete-btn" data-index="${index}">✓</button>
+                        <button class="delete-btn" data-index="${index}">✗</button>
+                    </div>
+                `;
+            taskList.appendChild(li);
+        });
+
+        document.querySelectorAll('.complete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const index = e.target.getAttribute('data-index');
+                currentTasks[index].completed = !currentTasks[index].completed;
+                updateTaskList();
+            });
+        });
+
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const index = e.target.getAttribute('data-index');
+                currentTasks.splice(index, 1);
+                updateTaskList();
+            });
+        });
+    }
+
+    function playNotificationSound() {
+        const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3');
+        audio.play();
+    }
+
+    startPauseBtn.addEventListener('click', startPauseTimer);
+    resetBtn.addEventListener('click', resetTimer);
+
+    addTaskBtn.addEventListener('click', () => {
+        const taskText = taskInput.value.trim();
+        const priority = prioritySelect.value;
+        if (taskText) {
+            addTask(taskText, priority);
+            taskInput.value = '';
+        }
+    });
+
+    settingsBtn.addEventListener('click', () => {
+        settingsModal.style.display = 'block';
+        document.getElementById('workTime').value = settings.workTime;
+        document.getElementById('shortBreakTime').value = settings.shortBreakTime;
+        document.getElementById('longBreakTime').value = settings.longBreakTime;
+        document.getElementById('longBreakInterval').value = settings.longBreakInterval;
+    });
+
+    historyBtn.addEventListener('click', () => {
+        historyModal.style.display = 'block';
+        updateHistoryDisplay();
+    });
+
+    closeSettingsBtn.addEventListener('click', () => {
+        settingsModal.style.display = 'none';
+    });
+
+    closeHistoryBtn.addEventListener('click', () => {
+        historyModal.style.display = 'none';
+    });
+
+    saveSettingsBtn.addEventListener('click', () => {
+        settings.workTime = parseInt(document.getElementById('workTime').value);
+        settings.shortBreakTime = parseInt(document.getElementById('shortBreakTime').value);
+        settings.longBreakTime = parseInt(document.getElementById('longBreakTime').value);
+        settings.longBreakInterval =  parseInt(document.getElementById('longBreakInterval').value);
+        settingsModal.style.display = 'none';
+        resetTimer();
+        saveState();
+    });
+
+    timerModes.forEach(modeElement => {
+        modeElement.addEventListener('click', () => {
+            setMode(modeElement.dataset.mode);
+        });
+    });
+
+    // Закрытие модальных окон при клике вне их области
+    window.onclick = function(event) {
+        if (event.target == settingsModal) {
+            settingsModal.style.display = "none";
+        }
+        if (event.target == historyModal) {
+            historyModal.style.display = "none";
+        }
+    }
+
+    // Обработка нажатия клавиши Enter для добавления задачи
+    taskInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const taskText = taskInput.value.trim();
+            const priority = prioritySelect.value;
+            if (taskText) {
+                addTask(taskText, priority);
+                taskInput.value = '';
+            }
+        }
+    });
+
+    function saveState() {
+        const state = {
+            settings,
+            currentMode,
+            timeLeft,
+            isRunning,
+            cycleCount,
+            workTime,
+            breakTime,
+            currentTasks,
+            history,
+            startTime: isRunning ? Date.now() : null
+        };
+        localStorage.setItem('pomodoroState', JSON.stringify(state));
+    }
+
+    function loadState() {
+        const savedState = localStorage.getItem('pomodoroState');
+        if (savedState) {
+            const state = JSON.parse(savedState);
+            settings = state.settings;
+            currentMode = state.currentMode;
+            isRunning = state.isRunning;
+            cycleCount = state.cycleCount;
+            workTime = state.workTime;
+            breakTime = state.breakTime;
+            currentTasks = state.currentTasks;
+            history = state.history;
+
+            if (isRunning && state.startTime) {
+                const elapsedSeconds = Math.floor((Date.now() - state.startTime) / 1000);
+                timeLeft = Math.max(state.timeLeft - elapsedSeconds, 0);
+            } else {
+                timeLeft = state.timeLeft;
+            }
+
+            updateDisplay();
+            updateTaskList();
+            if (isRunning) {
+                startTimer();
+            }
+        }
+    }
+
+    // Загрузка состояния при запуске
+    window.addEventListener('load', loadState);
+
+    // Сохранение состояния перед закрытием страницы
+    window.addEventListener('beforeunload', saveState);
+
+    updateDisplay();
+    updateTaskList();
+</script>
+</body>
+</html>
+
+
+</body>
+</html>

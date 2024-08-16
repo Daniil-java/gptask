@@ -134,4 +134,8 @@ public class TaskService {
         return taskRepository.findAllByTimerId(timerId);
     }
 
+    public List<TaskDto> saveAllTasks(List<TaskDto> dtoList) {
+        return taskMapper.entityListToDtoList(
+                taskRepository.saveAll(taskMapper.dtoListToEntityList(dtoList)));
+    }
 }

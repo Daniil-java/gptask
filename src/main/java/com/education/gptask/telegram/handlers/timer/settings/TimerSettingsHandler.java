@@ -51,7 +51,7 @@ public class TimerSettingsHandler implements MessageHandler {
         String userAnswer = message.getText();
         BotState botState = userEntity.getBotState();
 
-        Timer timer = timerService.getAnyCompleteTimerByUserId(userEntity.getId()).get(0);
+        Timer timer = timerService.getAnyNotCompleteTimerByUserId(userEntity.getId()).get(0);
         EditMessageText editMessageText = BotApiMethodBuilder.makeEditMessageText(chatId, messageId,
                 localeMessageService.getMessage(localeMessageService.getMessage(VALUE_WAITING_MESSAGE)));
 
