@@ -498,13 +498,7 @@
                 name: task.text,
                 priority: mapPriority(task.priority),
                 status: "DONE",
-                user: {
-                    id: 1
-                }
             })),
-            user: {
-                id: 1
-            },
             workDuration: workTime/60,
             shortBreakDuration: breakTime/60,
             interval: 1,
@@ -565,9 +559,8 @@
     }
 
     async function updateHistoryDisplay() {
-        const userId = 1; // Замените на ID пользователя
         try {
-            const response = await fetch(`http://localhost:8114/api/v1/timer?userId=${userId}`);
+            const response = await fetch(`http://localhost:8114/api/v1/timer/auth`);
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
@@ -632,11 +625,35 @@
                         ${task.text}
                     </span>
                     <div class="task-actions">
+                        <button class="generate-btn" data-index="${index}">⚙</button>
                         <button class="complete-btn" data-index="${index}">✓</button>
                         <button class="delete-btn" data-index="${index}">✗</button>
                     </div>
+                    <ul class="subtasks-list" id="subtasks-${index}"></ul>
                 `;
             taskList.appendChild(li);
+        });
+
+        document.querySelectorAll('.generate-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const index = e.target.getAttribute('data-index');
+                const task = currentTasks[index];
+                try {
+                    const response = await fetch('http://localhost:8114/api/v1/tasks/subtasks/generate', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({priority: mapPriority(task.priority),
+                            status: "DONE", name: task.text, comment: task.comment || ''})
+                    });
+                    if (!response.ok) {
+                        throw new Error('Ошибка при генерации подзадач');
+                    }
+                    const subtasks = await response.json();
+                    displaySubtasks(index, subtasks);
+                } catch (error) {
+                    console.error(error);
+                }
+            });
         });
 
         document.querySelectorAll('.complete-btn').forEach(btn => {
@@ -654,6 +671,16 @@
                 updateTaskList();
             });
         });
+
+        function displaySubtasks(parentIndex, subtasks) {
+            const subtaskList = document.getElementById(`subtasks-${parentIndex}`);
+            subtaskList.innerHTML = ''; // Очистить список подзадач перед обновлением
+            subtasks.forEach(subtask => {
+                const li = document.createElement('li');
+                li.textContent = `${subtask.name} - ${subtask.comment}`;
+                subtaskList.appendChild(li);
+            });
+        }
     }
 
     function playNotificationSound() {

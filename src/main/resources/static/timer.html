@@ -6,9 +6,9 @@
     <title>Помидоро</title>
     <style>
         :root {
-            --primary-color: #f1c40f;
-            --secondary-color: #2ecc71;
-            --background-color: #ecf0f1;
+            --primary-color: #FF6347;
+            --secondary-color: #e67e22;
+            background-color: #FADBD8;
             --text-color: #34495e;
         }
         body {
@@ -281,6 +281,8 @@
     <div class="header-buttons">
         <button id="historyBtn">История</button>
         <button id="settingsBtn">Настройки</button>
+        <button id="registrationBtn">Регистрация</button>
+        <button id="authBtn">Авторизоваться</button>
     </div>
 </header>
 <div class="container">
@@ -484,8 +486,75 @@
             tasks: [...currentTasks]
         };
         history.push(historyEntry);
+        saveTimer();
         updateHistoryDisplay();
         saveState();
+    }
+
+    function saveTimer() {
+        const timerData = {
+            tasks: currentTasks.map(task => ({
+                name: task.text,
+                priority: mapPriority(task.priority),
+                status: "DONE",
+                user: {
+                    id: 1
+                }
+            })),
+            user: {
+                id: 1
+            },
+            workDuration: workTime/60,
+            shortBreakDuration: breakTime/60,
+            interval: 1,
+            created: new Date()
+        };
+
+        fetch('http://localhost:8114/api/v1/timer/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(timerData)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                currentTasks.length = 0;
+                updateTaskList();
+                console.log('Timer saved:', data);
+            })
+            .catch(error => {
+                console.error('Error saving timer:', error);
+            });
+    }
+
+    function mapPriority(priority) {
+        if (priority === "M") {
+            return "MUST";
+        } else if (priority === "S") {
+            return "SHOULD";
+        } else if (priority === "C") {
+            return "COULD";
+        } else if (priority === "W") {
+            return "WOULD";
+        }
+    }
+
+    function mapPriorityReverse(priority) {
+        if (priority === "MUST") {
+            return "M";
+        } else if (priority === "SHOULD") {
+            return "S";
+        } else if (priority === "COULD") {
+            return "C";
+        } else if (priority === "WOULD") {
+            return "W";
+        }
     }
 
     function formatTime(seconds) {
@@ -494,58 +563,61 @@
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     }
 
-    function updateHistoryDisplay() {
-        historyList.innerHTML = '';
-        history.forEach((entry, index) => {
-            const entryElement = document.createElement('div');
-            entryElement.innerHTML = `
-                    <h3>Сессия ${index + 1} - ${entry.date}</h3>
-                    <p>Время работы: ${entry.workTime}</p>
-                    <p>Время перерыва: ${entry.breakTime}</p>
-                                        <h4>Задачи:</h4>
-                    <ul>
-                        ${entry.tasks.map(task => `<li><span class="priority-${task.priority}">${task.priority}</span> - ${task.text}</li>`).join('')}
-                    </ul>
-                    <hr>
-                `;
-            historyList.appendChild(entryElement);
-        });
+    async function updateHistoryDisplay() {
+        const userId = 1; // Замените на ID пользователя
+        try {
+            const response = await fetch(`http://localhost:8114/api/v1/timer?userId=${userId}`);
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const history = await response.json();
+
+            historyList.innerHTML = '';
+            history.forEach((entry, index) => {
+                const interval = entry.interval + 1;
+                const workInt = Math.floor(interval / 2) + (interval % 2);
+                const breakInt = interval - workInt;
+
+                let longBreakInt = 0;
+                let shortBreakInt = breakInt;
+
+                if (entry.longBreakInterval && entry.longBreakInterval > 0) {
+                    longBreakInt = Math.floor(breakInt / entry.longBreakInterval);
+                    shortBreakInt = breakInt - longBreakInt;
+                }
+
+                const workTime = workInt * entry.workDuration;
+                const shortBreakTime = shortBreakInt * entry.shortBreakDuration;
+                const longBreakTime = longBreakInt * entry.longBreakDuration;
+                const breakTime = shortBreakTime + longBreakTime;
+
+                const date = new Date(entry.created);
+                const formattedDate = `${date.toLocaleDateString('ru-RU')} ${date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}`;
+
+                const entryElement = document.createElement('div');
+                const tasksListHtml = Array.from(entry.tasks).map(task =>
+                    `<li><span class="priority-${mapPriorityReverse(task.priority)}">${mapPriorityReverse(task.priority)}</span> - ${task.name}</li>`
+                ).join('');
+                entryElement.innerHTML = `
+                <h3>${formattedDate}</h3>
+                <p>Время работы: ${workTime} минут</p>
+                <p>Время перерыва: ${breakTime}  минут</p>
+                ${tasksListHtml ? `<h4>Задачи:</h4><ul>${tasksListHtml}</ul>` : ''}
+                <hr>
+            `;
+                historyList.appendChild(entryElement);
+            });
+        } catch (error) {
+            console.error('Error fetching history:', error);
+        }
     }
 
-    // function addTask(text, priority) {
-    //     const task = { text, priority, completed: false };
-    //     currentTasks.push(task);
-    //     updateTaskList();
-    //     saveState();
-    //
-    // }
-
     function addTask(text, priority) {
-        const task = {
-            name: text,
-            priority,
-            status: 'IN_PROGRESS',
-            user: 1,
-        };
+        const task = { text, priority, completed: false };
         currentTasks.push(task);
         updateTaskList();
         saveState();
 
-        // Отправка POST-запроса на контроллер
-        fetch('http://localhost:8114/api/v1/tasks', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(task)
-        })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Task created:', data);
-            })
-            .catch(error => {
-                console.error('Error creating task:', error);
-            });
     }
 
     function updateTaskList() {
@@ -718,4 +790,3 @@
 
 </body>
 </html>
-

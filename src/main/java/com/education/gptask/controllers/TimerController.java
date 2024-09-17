@@ -3,6 +3,7 @@ package com.education.gptask.controllers;
 import com.education.gptask.dtos.TimerDto;
 import com.education.gptask.services.TimerService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,7 +13,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/timer")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:63342")
 public class TimerController {
     private final TimerService timerService;
 
@@ -24,6 +24,11 @@ public class TimerController {
     @GetMapping("/{timerId}")
     public TimerDto getTimerById(@PathVariable Long timerId) {
         return timerService.getTimerDtoById(timerId);
+    }
+
+    @GetMapping("/auth")
+    public List<TimerDto> getTimersByAuthentication(Authentication authentication) {
+        return timerService.getTimersDtoByAuthentication(authentication);
     }
 
     @PostMapping
@@ -62,7 +67,7 @@ public class TimerController {
     }
 
     @PostMapping("/save")
-    public TimerDto saveTimerFromFront(@RequestBody TimerDto timerDto) {
-        return timerService.saveTimerFromFront(timerDto);
+    public TimerDto saveTimerFromFront(Authentication authentication, @RequestBody TimerDto timerDto) {
+        return timerService.saveTimerFromFront(timerDto, authentication);
     }
 }

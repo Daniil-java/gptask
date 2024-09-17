@@ -14,7 +14,6 @@ import java.util.List;
 @RequestMapping("/api/v1/tasks")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "http://localhost:63342")
 public class TaskController {
     private final TaskService taskService;
 
