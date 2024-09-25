@@ -96,7 +96,7 @@ public class TaskListHandler implements MessageHandler {
             }
             if (!userAnswer.isEmpty() && userAnswer.startsWith(localeMessageService.getMessage(BIND_COMMAND))) {
                 long taskId = NumeralConverter.parsePositiveSafelyLong(userAnswer.substring(localeMessageService.getMessage(BIND_COMMAND).length()));
-                long timerId = timerService.getAnyCompleteTimerByUserId(userEntity.getId()).get(0).getId();
+                long timerId = timerService.getAnyNotCompleteTimerByUserId(userEntity.getId()).get(0).getId();
                 timerService.bindTaskToTimer(timerId, taskId);
                 return new SendMessage(String.valueOf(chatId), localeMessageService.getMessage(TASK_BIND_MESSAGE));
             }

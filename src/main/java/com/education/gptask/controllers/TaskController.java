@@ -3,6 +3,7 @@ package com.education.gptask.controllers;
 import com.education.gptask.dtos.TaskDto;
 import com.education.gptask.services.TaskService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,6 +13,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/tasks")
 @RequiredArgsConstructor
+@Slf4j
 public class TaskController {
     private final TaskService taskService;
 
@@ -45,5 +47,9 @@ public class TaskController {
         return taskService.generateSubtasks(taskDto);
     }
 
+    @PostMapping("/save")
+    public List<TaskDto> saveAllTasks(@RequestBody List<TaskDto> dtoList) {
+        return taskService.saveAllTasks(dtoList);
+    }
 
 }

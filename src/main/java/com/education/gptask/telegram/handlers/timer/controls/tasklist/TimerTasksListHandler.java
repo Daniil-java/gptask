@@ -38,7 +38,7 @@ public class TimerTasksListHandler implements MessageHandler {
     public BotApiMethod handle(Message message, UserEntity userEntity) {
         String userAnswer = message.getText();
         BotState botState = userEntity.getBotState();
-        Timer timer = timerService.getAnyCompleteTimerByUserId(userEntity.getId()).get(0);
+        Timer timer = timerService.getAnyNotCompleteTimerByUserId(userEntity.getId()).get(0);
         List<Task> taskList = null;
         if (!timer.getTasks().isEmpty()) {
             taskList = taskService.getTasksByTimerId(timer.getId());
