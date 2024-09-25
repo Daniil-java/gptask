@@ -1,6 +1,8 @@
 package com.education.gptask.services;
 
+import com.education.gptask.dtos.TaskDto;
 import com.education.gptask.dtos.TimerDto;
+import com.education.gptask.dtos.UserDto;
 import com.education.gptask.dtos.mappers.TimerMapper;
 import com.education.gptask.entities.UserEntity;
 import com.education.gptask.entities.error.ErrorResponseException;
@@ -12,6 +14,7 @@ import com.education.gptask.repositories.TimerRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -224,8 +227,21 @@ public class TimerService {
         return timerRepository.findTimersByUserEntityIdAndCreatedAfter(userId, localDate);
     }
 
-    public TimerDto saveTimerFromFront(TimerDto timerDto) {
-        timerDto.setStatus(TimerStatus.COMPLETE);
+    public TimerDto saveTimerFromWeb(TimerDto timerDto, Authentication authentication) {
+        UserEntity user = (UserEntity) authentication.getPrincipal();
+
+        UserDto userDto = new UserDto().setId(user.getId());
+        for (TaskDto taskDto : timerDto.getTasks()) {
+            taskDto.setUser(userDto);
+        }
+        timerDto.setStatus(TimerStatus.COMPLETE)
+                .setUser(userDto);
+
         return timerMapper.entityToDto(timerRepository.save(timerMapper.dtoToEntity(timerDto)));
+    }
+
+    public List<TimerDto> getTimersDtoByAuthentication(Authentication authentication) {
+        UserEntity user = (UserEntity) authentication.getPrincipal();
+        return getTimersDtoByUserId(user.getId());
     }
 }

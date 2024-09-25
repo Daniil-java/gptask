@@ -92,7 +92,12 @@ public class TaskService {
                 task.setUserEntity(userMapper.dtoToEntity(taskDto.getUser()));
                 task.setParent(new Task().setId(taskDto.getId()));
             }
-            return taskMapper.entityListToDtoList(taskRepository.saveAll(taskList));
+            if (taskDto.getUser() != null) {
+                return taskMapper.entityListToDtoList(taskRepository.saveAll(taskList));
+            } else {
+                return taskMapper.entityListToDtoList(taskList);
+            }
+
         } catch (JsonProcessingException e) {
             throw new ErrorResponseException(ErrorStatus.TASK_SUBTASK_GENERATION_ERROR);
         }
