@@ -505,7 +505,7 @@
             created: new Date()
         };
 
-        fetch('http://localhost:8114/api/v1/timer/save', {
+        fetch('/api/v1/timer/save', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -560,7 +560,7 @@
 
     async function updateHistoryDisplay() {
         try {
-            const response = await fetch(`http://localhost:8114/api/v1/timer/auth`);
+            const response = await fetch(`/api/v1/timer/auth`);
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
@@ -639,7 +639,7 @@
                 const index = e.target.getAttribute('data-index');
                 const task = currentTasks[index];
                 try {
-                    const response = await fetch('http://localhost:8114/api/v1/tasks/subtasks/generate', {
+                    const response = await fetch('/api/v1/tasks/subtasks/generate', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({priority: mapPriority(task.priority),

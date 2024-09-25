@@ -510,7 +510,7 @@
             created: new Date()
         };
 
-        fetch('http://localhost:8114/api/v1/timer/save', {
+        fetch('/api/v1/timer/save', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -566,7 +566,7 @@
     async function updateHistoryDisplay() {
         const userId = 1; // Замените на ID пользователя
         try {
-            const response = await fetch(`http://localhost:8114/api/v1/timer?userId=${userId}`);
+            const response = await fetch(`/api/v1/timer?userId=${userId}`);
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }

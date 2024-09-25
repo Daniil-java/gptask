@@ -4,7 +4,6 @@ import com.education.gptask.dtos.TaskDto;
 import com.education.gptask.dtos.TimerDto;
 import com.education.gptask.dtos.UserDto;
 import com.education.gptask.dtos.mappers.TimerMapper;
-import com.education.gptask.dtos.mappers.UserMapper;
 import com.education.gptask.entities.UserEntity;
 import com.education.gptask.entities.error.ErrorResponseException;
 import com.education.gptask.entities.error.ErrorStatus;
@@ -228,7 +227,7 @@ public class TimerService {
         return timerRepository.findTimersByUserEntityIdAndCreatedAfter(userId, localDate);
     }
 
-    public TimerDto saveTimerFromFront(TimerDto timerDto, Authentication authentication) {
+    public TimerDto saveTimerFromWeb(TimerDto timerDto, Authentication authentication) {
         UserEntity user = (UserEntity) authentication.getPrincipal();
 
         UserDto userDto = new UserDto().setId(user.getId());

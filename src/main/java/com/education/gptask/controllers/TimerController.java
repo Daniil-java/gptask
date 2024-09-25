@@ -68,6 +68,6 @@ public class TimerController {
 
     @PostMapping("/save")
     public TimerDto saveTimerFromFront(Authentication authentication, @RequestBody TimerDto timerDto) {
-        return timerService.saveTimerFromFront(timerDto, authentication);
+        return timerService.saveTimerFromWeb(timerDto, authentication);
     }
 }
