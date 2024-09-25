@@ -12,6 +12,9 @@ import com.education.gptask.telegram.entities.BotState;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -19,8 +22,14 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.User;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +39,7 @@ public class UserService implements UserDetailsService {
     private final RoleRepository roleRepository;
     private final UserMapper userMapper;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final String botToken = System.getenv("TGBOT_TOKEN");
 
     public boolean registerUser(UserDto userDto) {
         return registerUser(userMapper.dtoToEntity(userDto));
@@ -42,7 +52,7 @@ public class UserService implements UserDetailsService {
         }
 
         userRepository.save(new UserEntity()
-                .setRoles(Collections.singleton(new Role().setId(1L).setStatus("ROLE_USER")))
+                .setRoles(Collections.singleton(new Role().setStatus("ROLE_USER")))
                 .setPassword(bCryptPasswordEncoder.encode(userEntity.getPassword()))
                 .setUsername(userEntity.getUsername())
         );
@@ -104,5 +114,94 @@ public class UserService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new ErrorResponseException(ErrorStatus.USER_NOT_FOUND_ERROR));
+    }
+
+    public UserDto getOrCreateTelegramUser(String telegramId, String username) {
+        long tgId = Long.parseLong(telegramId);
+        Optional<UserEntity> userEntity =
+                userRepository.findUserEntityByTelegramId(tgId);
+        UserEntity user;
+        if (!userEntity.isPresent()) {
+            user = userRepository.save(new UserEntity()
+                    .setTelegramId(tgId)
+                    .setRoles(Collections.singleton(new Role().setId(1L).setStatus("ROLE_USER")))
+                    .setUsername(username)
+            );
+        } else {
+            user = userEntity.get();
+        }
+        return userMapper.entityToDto(user);
+    }
+
+    public void handleTelegramAuth(Map<String, String> queryParams) {
+        // Проверьте данные, пришедшие от Telegram (подпись и другие параметры)
+        if (isValidTelegramAuth(queryParams)) {
+            String telegramId = queryParams.get("id");
+            String username = queryParams.get("username");
+
+            // Получаем или создаем пользователя
+            UserDto userDto = getOrCreateTelegramUser(telegramId, username);
+
+            // Создаем объект UserDetails
+            UserDetails userDetails = new UserEntity().setUsername(username);
+
+            // Создаем аутентификационный объект
+            Authentication authentication = new UsernamePasswordAuthenticationToken(
+                    userDetails, null, userDetails.getAuthorities());
+
+            // Сохраняем объект аутентификации в SecurityContext
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
+    }
+
+    private boolean isValidTelegramAuth(Map<String, String> queryParams) {
+        // Получите подпись, присланную Telegram
+        String hash = queryParams.get("hash");
+
+        // Уберите поле 'hash', так как его не надо учитывать при проверке подписи
+        Map<String, String> authData = new TreeMap<>(queryParams);
+        authData.remove("hash");
+
+        // Подготовьте строку для проверки
+        StringBuilder dataCheckString = new StringBuilder();
+        for (Map.Entry<String, String> entry : authData.entrySet()) {
+            dataCheckString.append(entry.getKey()).append("=").append(entry.getValue()).append("\n");
+        }
+
+        // Удаляем последний перенос строки
+        dataCheckString.deleteCharAt(dataCheckString.length() - 1);
+
+        try {
+            // Генерация секретного ключа для подписи
+            byte[] secretKey = MessageDigest.getInstance("SHA-256").digest(botToken.getBytes(StandardCharsets.UTF_8));
+
+            // Создайте HMAC_SHA256 хеш
+            Mac mac = Mac.getInstance("HmacSHA256");
+            SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey, "HmacSHA256");
+            mac.init(secretKeySpec);
+
+            // Примените хеширование
+            byte[] computedHash = mac.doFinal(dataCheckString.toString().getBytes(StandardCharsets.UTF_8));
+
+            // Сравните хеши (телеграм присылает hash в hex-формате)
+            String computedHashHex = bytesToHex(computedHash);
+            return computedHashHex.equals(hash);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // Вспомогательный метод для конвертации байтов в hex-строку
+    private String bytesToHex(byte[] bytes) {
+        StringBuilder hexString = new StringBuilder(2 * bytes.length);
+        for (byte b : bytes) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) {
+                hexString.append('0');
+            }
+            hexString.append(hex);
+        }
+        return hexString.toString();
     }
 }

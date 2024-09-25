@@ -25,6 +25,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/registration").permitAll()
                         .requestMatchers("/admin/**").hasAnyAuthority("ROLE_ADMIN")
                         .requestMatchers("/", "/resources/**").permitAll()
+                        .requestMatchers("/auth/telegram").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
