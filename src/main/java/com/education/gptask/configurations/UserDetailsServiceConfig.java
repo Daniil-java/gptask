@@ -9,16 +9,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @Configuration
 public class UserDetailsServiceConfig {
-    private final UserService userService;
-
-    public UserDetailsServiceConfig(@Lazy UserService userService) {
-        this.userService = userService;
-    }
-
-    @Bean
-    public UserDetailsService userDetailsService() {
-        return userService;
-    }
 
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
