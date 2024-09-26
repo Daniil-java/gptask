@@ -133,7 +133,7 @@ public class UserService implements UserDetailsService {
         return userMapper.entityToDto(user);
     }
 
-    public void handleTelegramAuth(Map<String, String> queryParams) {
+    public boolean handleTelegramAuth(Map<String, String> queryParams) {
         // Проверьте данные, пришедшие от Telegram (подпись и другие параметры)
         if (isValidTelegramAuth(queryParams)) {
             String telegramId = queryParams.get("id");
@@ -151,6 +151,9 @@ public class UserService implements UserDetailsService {
 
             // Сохраняем объект аутентификации в SecurityContext
             SecurityContextHolder.getContext().setAuthentication(authentication);
+            return  true;
+        } else {
+            return false;
         }
     }
 

@@ -17,8 +17,12 @@ public class TelegramAuthController {
     private final UserService userService;
 
     @PostMapping("/telegram")
-    public void handleTelegramAuth(@RequestParam Map<String, String> queryParams) {
-        userService.handleTelegramAuth(queryParams);
+    public String handleTelegramAuth(@RequestParam Map<String, String> queryParams) {
+        if (userService.handleTelegramAuth(queryParams)) {
+            return "redirect:/";
+        } else {
+            return "login";
+        }
     }
 
 
