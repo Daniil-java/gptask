@@ -52,7 +52,7 @@ public class UserService implements UserDetailsService {
         }
 
         userRepository.save(new UserEntity()
-                .setRoles(Collections.singleton(new Role().setStatus("ROLE_USER")))
+                .setRoles(Collections.singleton(new Role().setId(1L)))
                 .setPassword(bCryptPasswordEncoder.encode(userEntity.getPassword()))
                 .setUsername(userEntity.getUsername())
         );
@@ -124,7 +124,7 @@ public class UserService implements UserDetailsService {
         if (!userEntity.isPresent()) {
             user = userRepository.save(new UserEntity()
                     .setTelegramId(tgId)
-                    .setRoles(Collections.singleton(new Role().setId(1L).setStatus("ROLE_USER")))
+                    .setRoles(Collections.singleton(new Role().setId(1L)))
                     .setUsername(username)
             );
         } else {
