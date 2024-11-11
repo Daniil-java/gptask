@@ -120,7 +120,7 @@ public class TaskCreationHandler implements MessageHandler {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
 
-        InlineKeyboardButton skipButton = new InlineKeyboardButton(TASK_SKIP_MESSAGE);
+        InlineKeyboardButton skipButton = new InlineKeyboardButton(localeMessageService.getMessage(TASK_SKIP_MESSAGE));
         skipButton.setCallbackData(localeMessageService.getMessage(SKIP_COMMAND));
         rowList.add(Arrays.asList(skipButton));
         inlineKeyboardMarkup.setKeyboard(rowList);
